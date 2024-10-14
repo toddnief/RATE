@@ -1,0 +1,6 @@
+{
+    "data_file": "prompt_completions_gpt-4-1106-preview_subset300_seed123_numtokens40_next1_temp0.7_job23632.json",
+    "model_name": "gpt2",
+    "weight": 20,
+    "direction_path": "/net/projects/veitch/prompt_distributions/directions/das_simple_train_ADJ_layer12.json"
+}

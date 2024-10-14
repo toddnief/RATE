@@ -1,0 +1,14 @@
+smoke_test: true
+rewrites:
+  dataset_name: "helpsteer_helpfulness" # This is used in a factory function to import the dataset template
+scoring:
+  model: "armorm" # Choices: "distilbert_positive", "distilbert_negative", "deberta", "armorm", "sfairxc", "ncsoft"
+  dataset_folder: "scored" # Choices: "rewrites", "scored"
+  dataset_name: "imdb_length" # Note: used in filename so update to match the dataset filename below (INCLUDE CONCEPT)
+  dataset_filename: "archive/imdb_length_sfairxc_scored_20240918_195038.jsonl"
+effects:
+  dataset_name: "imdb" # Note to make sure this matches the filename; is used to create filename
+  concept: "sentiment"
+  score: "armorm"
+  reward_key: "ArmoRM" # Note: This is the key for the reward in the dataset
+  dataset_filename: "imdb_sentiment_complete_scored_20240919_152739.jsonl"

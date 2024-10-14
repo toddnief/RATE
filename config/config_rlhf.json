@@ -1,0 +1,20 @@
+{
+    "data_file": "helpful_harmful_completions_200.json",
+    "tokenizer_path": "/net/scratch/dpo/Step1_SFT/Step1_SFT_Antrophic_Pythia28",
+    "original_model": {
+        "model_path": "EleutherAI/pythia-2.8b",
+        "weights_path": "/net/projects/veitch/llm_alignment/direct-preference-optimization/.cache/garbacea/anthropic_dpo_pythia28_2024-01-27_20-42-34_616113/LATEST/policy.pt"
+    },
+    "finetuned_models": [
+        {
+            "name": "best",
+            "model_path": "EleutherAI/pythia-2.8b",
+            "weights_path": "/net/projects/veitch/llm_alignment/direct-preference-optimization/.cache/garbacea/anthropic_ipo_pythia28_baseline_hh_subset_best_and_worst_of_8_beta00275482094_combined_loss_alpha0005_separate_loss_logs_seed5_2024-05-01_18-01-07_469089/step-19968/policy.pt"
+        },
+        {
+            "name": "adequate",
+            "model_path": "EleutherAI/pythia-2.8b",
+            "weights_path": "/net/projects/veitch/llm_alignment/direct-preference-optimization/.cache/garbacea/anthropic_ipo_pythia28_baseline_hh_subset_best_and_worst_of_8_beta00275482094_seed_1_2024-05-01_22-36-18_104383/step-19968/policy.pt"
+        }
+    ]
+}
