@@ -4,15 +4,16 @@ _conda = conda
 SBATCH = $(_conda) run -n ${ENV_NAME} sbatch
 SRUN = $(_conda) run -n ${ENV_NAME} srun
 
-# TODO: set these in .env
-ENV_NAME = editeval
-PARTITION = general
-PROJECT_DIR = /net/projects/veitch/prompt_distributions/
+ENV_NAME = rate
 DATA_DIR = $(PROJECT_DIR)data/
 RESULTS_DIR = $(PROJECT_DIR)results/
 REWRITES_DIR = $(DATA_DIR)rewrites/
-GROUP_NAME = veitch-lab
 PERMISSIONS = 664
+
+# TODO: set these in .env?
+GROUP_NAME = veitch-lab
+PARTITION = general
+PROJECT_DIR = /net/projects/veitch/prompt_distributions/
 
 logs_dir = ${workdir}logs/
 DATE := $(shell date +"%Y%m%d_%H%M%S")
