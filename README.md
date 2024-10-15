@@ -1,5 +1,15 @@
 
-## Config Files
+Note: Cleaning up this code is a work in progress. This repo will be regularly updated over the next several weeks. Please reach out if you are trying to use it and encounter problems.
+
+## Environment Setup
+
+### Conda Environment
+
+### Environment Variables
+
+## Experiment Structure
+
+### Config Files
 
 We use a single config file for all of the settings to run experiments. The config file is broken up into the three "phases" of the experiment and the settings for each are separate.
 

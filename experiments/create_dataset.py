@@ -1,23 +1,28 @@
 """Script to create a dataset of completions and rewrites using the OpenAI API."""
 
+import argparse
 import importlib
 import json
 import os
 from pathlib import Path
 from typing import Any, Dict, List
 
+import yaml
 from constants import (
+    API_DIR,
     FILE_ID,
     REWRITES_DATASET_NAME,
     REWRITES_DIR,
     SMOKE_TEST,
+    load_config,
     logging,
 )
 from dotenv import load_dotenv
 from gpt4_api import create_api_batch, submit_batch
 from openai import OpenAI
-
 from utils import serialize_experiment_template, write_to_json
+
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 
 def write_batch_input(batch_input: List[Dict[str, Any]], filename: str) -> None:
@@ -64,8 +69,8 @@ def add_json_to_dataset(
 
 def create_dataset(
     client: Any,
-    file_id: str = "FILE_ID",
-    data_dir: Path = Path("API_DIR"),
+    file_id: str = FILE_ID,
+    data_dir: Path = Path(API_DIR),
     **dataset_template: Any,
 ) -> Dict[str, Dict[str, Any]]:
     """
@@ -152,8 +157,27 @@ def create_dataset(
 
 
 if __name__ == "__main__":
+    # Note: Use argparse to allow submission of config file via slurm
+    parser = argparse.ArgumentParser(description="Scoring script")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="config.yaml",  # Default to config.yaml in SCRIPT_DIR if not provided
+        help="Path to the config file",
+    )
+    args = parser.parse_args()
+
+    yaml_path = SCRIPT_DIR / args.config
+
+    # Note: Lazy loads config constants
+    load_config(yaml_path)
+
+    with open(yaml_path, "r") as f:
+        config = yaml.safe_load(f)
+
     load_dotenv()
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    REWRITES_DATASET_NAME = config["rewrites"]["dataset_name"]
 
     def load_rewrite_template(template_name):
         try:
