@@ -35,7 +35,11 @@ We use a single config file for all of the settings to run experiments. The conf
 
 ### Smoke Test
 
+TODO
+
 ### Ground Truth Datasets
+
+TODO
 
 ## Creating Datasets
 
@@ -44,6 +48,8 @@ make create_dataset
 ```
 
 ### Dataset Templates
+
+TODO
 
 ## Scoring Datasets
 
@@ -54,5 +60,9 @@ make score_dataset CONFIG=custom_config.yaml
 
 ### Scoring Templates
 
+TODO
+
 ## Calculating Treatment Effects
+
+TODO
 
