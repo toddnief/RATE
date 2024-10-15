@@ -22,32 +22,6 @@ err_file = ${LOG_FILE_PREFIX}_err.txt
 
 workdir = ./
 
-# TODO: Add logic for checking conda environments if needed
-
-.PHONY: run_rlhf
-run_rlhf:
-	pip uninstall -r requirements.aa.txt -y
-	pip install -r requirements.rlhf.txt
-	python experiments_v2.py --experiment rlhf
-	find $(RESULTS_DIR) -name "*.json" -exec chgrp $(GROUP_NAME) {} \;
-	find $(RESULTS_DIR) -name "*.json" -exec chmod $(PERMISSIONS) {} \;
-
-.PHONY: run_aa
-run_aa:
-	pip uninstall -r requirements.rlhf.txt -y
-	pip install -r requirements.aa.txt
-	python experiments_v2.py --experiment aa
-	find $(RESULTS_DIR) -name "*.json" -exec chgrp $(GROUP_NAME) {} \;
-	find $(RESULTS_DIR) -name "*.json" -exec chmod $(PERMISSIONS) {} \;
-
-.PHONY: run_sft
-run_sft:
-	pip uninstall -r requirements.rlhf.txt -y
-	pip install -r requirements.aa.txt
-	python experiments_v2.py --experiment sft
-	find $(RESULTS_DIR) -name "*.json" -exec chgrp $(GROUP_NAME) {} \;
-	find $(RESULTS_DIR) -name "*.json" -exec chmod $(PERMISSIONS) {} \;
-
 .PHONY: create_dataset
 create_dataset:
 	${SBATCH} \

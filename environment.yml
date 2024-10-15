@@ -1,0 +1,56 @@
+name: rate
+channels:
+  - pytorch
+  - nvidia
+  - defaults
+  # - conda-forge
+dependencies:
+  # - libstdcxx-ng>=14.1.0
+  # - libgcc-ng>=14.1.0
+  - pip
+  - pytorch=2.3.0=*cuda12.1*
+  # - cudatoolkit=12.1*
+  - ipython
+  - ipykernel
+  - ipywidgets
+  # - h5py
+  - jupyter_client
+  - numpy
+  - matplotlib-inline
+  - pandas
+  # - pillow
+  # - plotly
+  - scikit-learn
+  - seaborn
+  
+  # - h5py
+  # - ipykernel
+  # - ipython
+  # - ipywidgets
+  # - jupyter_client
+  # - libstdcxx-ng[version='>=11.2.0']
+  # - matplotlib-inline
+  # - numpy
+  # - pandas
+  # - pillow
+  # - pip
+  # - plotly
+  # - pytorch
+
+  - pip:
+      - python-dotenv
+      - accelerate== 0.30.1
+      - datasets==2.19.1
+      - matplotlib
+      - tqdm
+      - transformers==4.40.2
+      # - jaxtyping
+      # - einops
+      - pytest
+      # - typeguard
+      # - fancy_einsum
+      # - imgkit
+      # - mistral-common
+      # - bitsandbytes --index-url=https://pypi.org/simple
+      - openai
+      # - tiktoken
