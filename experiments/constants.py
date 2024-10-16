@@ -1,9 +1,11 @@
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 
 import torch
 import yaml
+from dotenv import load_dotenv
 
 logging.basicConfig(
     level=logging.INFO,
@@ -13,18 +15,19 @@ logging.basicConfig(
     ],
 )
 
-GROUP_NAME = "veitch-lab"
-
 SCRIPT_DIR = Path(__file__).resolve().parent
+load_dotenv(SCRIPT_DIR.parent / ".env")
 
-PROJECT_DIR = Path("/net/projects/veitch/prompt_distributions/")
-
+# PROJECT_DIR = Path("/net/projects/veitch/prompt_distributions/")
+# GROUP_NAME = "veitch-lab"
+PROJECT_DIR = Path(os.getenv("PROJECT_DIR"))
+GROUP_NAME = os.getenv("GROUP_NAME")
 
 DATA_DIR = PROJECT_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 HH_RLHF_PATH = DATA_DIR / "hh-rlhf" / "hh-rlhf.json"
-
+ELI_5 = DATA_DIR / "ELI5" / "all.jsonl"
 
 API_DIR = DATA_DIR / "batch_api"
 API_DIR.mkdir(parents=True, exist_ok=True)

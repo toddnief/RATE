@@ -212,7 +212,6 @@ if __name__ == "__main__":
         **dataset_template,
     )
 
-    # TODO: Do I want to save these as jsonl?
     dataset_filename = (
         REWRITES_DIR / f"{dataset_template['dataset_name']}_dataset_{FILE_ID}.json"
     )
