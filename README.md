@@ -3,7 +3,7 @@ Note (October 15, 2024): Cleaning up this code is a work in progress. This repo 
 
 # RATE (Rewrite-based Attribute Treatment Estimators)
 
-This code coincides with the to be released paper RATE: Score Reward Models with Imperfect Rewrites of Rewrites.
+This code runs the experiments in [RATE: Score Reward Models with Imperfect Rewrites of Rewrites.](https://arxiv.org/abs/2410.11348).
 
 TODO: Summary of the paper and experiments
 
@@ -37,10 +37,11 @@ PARTITION="general"
 
 ## Experiment Structure
 
-There are three key parts of this experiment:
+There are four key parts of this experiment:
 1. Generating datasets
 2. Scoring examples
 3. Calculating treatment effects
+4. Visualizing results
 
 Each of these can be run separately--see the appropriate section for more detailed instructions.
 
@@ -132,6 +133,10 @@ make score_dataset CONFIG=custom_config.yaml
 TODO
 
 ## Calculating Treatment Effects
+
+TODO
+
+## Visualizing Results
 
 TODO
 
