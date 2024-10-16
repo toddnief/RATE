@@ -38,20 +38,12 @@ PARTITION="general"
 ## Experiment Structure
 
 There are four key parts of this experiment:
-1. Generating datasets
-2. Scoring examples
-3. Calculating treatment effects
-4. Visualizing results
+1. [Generating datasets](#generating-datasets)
+2. [Scoring datasets](#scoring-datasets)
+3. [Calculating treatment effects](#calculating-treatment-effects)
+4. [Visualizing results](#visualizing-results)
 
 Each of these can be run separately--see the appropriate section for more detailed instructions.
-
-## Datasets
-
-The datasets we used in our experiments are:
-- [HelpSteer](https://huggingface.co/datasets/nvidia/HelpSteer)
-- [IMDB](https://huggingface.co/datasets/stanfordnlp/imdb)
-- [HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf)
-- [ELI5](https://facebookresearch.github.io/ELI5/index.html)
 
 ### Config Files
 
@@ -80,13 +72,23 @@ If you set ```smoke_test: true``` in your config file, the experiments will run 
 
 ### Logging
 
-TODO
+Logs are created in ```logs/``` when running each script with Make commands.
 
-## Creating Datasets
+Logging is configured in ```experiments/constants.py```.
+
+## Generating Datasets
 
 ```
 make create_dataset
 ```
+
+### Datasets
+
+The datasets we used in our experiments are:
+- [HelpSteer](https://huggingface.co/datasets/nvidia/HelpSteer)
+- [IMDB](https://huggingface.co/datasets/stanfordnlp/imdb)
+- [HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf)
+- [ELI5](https://facebookresearch.github.io/ELI5/index.html)
 
 ### Dataset Templates
 
