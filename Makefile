@@ -1,3 +1,5 @@
+include .env # sets GROUP_NAME, PARTITION, PROJECT_DIR
+
 CONFIG ?= config.yaml  # Default config file if CONFIG is not provided
 
 _conda = conda
@@ -9,11 +11,6 @@ DATA_DIR = $(PROJECT_DIR)data/
 RESULTS_DIR = $(PROJECT_DIR)results/
 REWRITES_DIR = $(DATA_DIR)rewrites/
 PERMISSIONS = 664
-
-# TODO: set these in .env?
-GROUP_NAME = veitch-lab
-PARTITION = general
-PROJECT_DIR = /net/projects/veitch/prompt_distributions/
 
 logs_dir = ${workdir}logs/
 DATE := $(shell date +"%Y%m%d_%H%M%S")

@@ -25,12 +25,14 @@ The scripts expect a ```.env``` file located in the root of the directory with t
 - An OpenAI API key
 - A project directory (for saving datasets rewritten and scored datasets - doesn't have to be the same as the location of the script)
 - A permissions group (the scripts automatically update the permissions of saved files to be accessible by the permissions group - if you don't have a group you'd like to use here and you're not worried about security of the files, ```users``` is fine)
+- A [SLURM partition](https://slurm.schedmd.com/quickstart.html) for Make commands to use
 
 Here's an example ```.env``` file:
 ```
 OPENAI_API_KEY="yOuRoPeNaIaPiKeY123"
 PROJECT_DIR="path/to/where/the/data/will/save"
 GROUP_NAME="users"
+PARTITION="general"
 ```
 
 ## Experiment Structure
@@ -74,6 +76,10 @@ effects:
 ### Smoke Test
 
 If you set ```smoke_test: true``` in your config file, the experiments will run with smaller datasets to avoid wasting API calls or compute resources. Check the ```__main__``` block in each script to review the smoke test limits
+
+### Logging
+
+TODO
 
 ## Creating Datasets
 

@@ -18,8 +18,7 @@ logging.basicConfig(
 SCRIPT_DIR = Path(__file__).resolve().parent
 load_dotenv(SCRIPT_DIR.parent / ".env")
 
-# PROJECT_DIR = Path("/net/projects/veitch/prompt_distributions/")
-# GROUP_NAME = "veitch-lab"
+# Note: Make sure these are set in the .env file
 PROJECT_DIR = Path(os.getenv("PROJECT_DIR"))
 GROUP_NAME = os.getenv("GROUP_NAME")
 
@@ -48,7 +47,8 @@ FILE_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Initialized config constants to None — will be lazy loaded in script
+# Initialize config constants to None — will be lazy loaded in load_config
+# Make sure to import and run load_config in scripts that use these constants
 SMOKE_TEST = None
 REWRITES_DATASET_NAME = None
 
@@ -66,11 +66,3 @@ def load_config(config_path=None):
     REWRITES_DATASET_NAME = config["rewrites"]["dataset_name"]
 
     logging.info(f"Loaded config from {config_file}")
-
-
-# with open(SCRIPT_DIR / "config.yaml", "r") as f:
-#     config = yaml.safe_load(f)
-
-# SMOKE_TEST = config["smoke_test"]
-
-# REWRITES_DATASET_NAME = config["rewrites"]["dataset_name"]
