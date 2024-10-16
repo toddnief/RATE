@@ -78,6 +78,15 @@ Logging is configured in ```experiments/constants.py```.
 
 ## Generating Datasets
 
+To generate datasets, we go through the following process:
+- Choose a dataset
+- Classify the ground truth of the target concept on each example
+- Make calls to the [OpenAI batch API](https://platform.openai.com/docs/guides/batch) to generate rewrites and rewrites of rewrites on the target concept
+
+Each dataset is managed by a dataset template that lives in ```dataset_templates```.
+
+When you have created a template for your experiment (and updated the [config yaml file](#config-files) with the appropriate settings), you can schedule this as a SLURM job using Make:
+
 ```
 make create_dataset
 ```
@@ -89,6 +98,10 @@ The datasets we used in our experiments are:
 - [IMDB](https://huggingface.co/datasets/stanfordnlp/imdb)
 - [HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf)
 - [ELI5](https://facebookresearch.github.io/ELI5/index.html)
+
+### Classifying the Ground Truth
+
+TODO
 
 ### Dataset Templates
 
@@ -119,9 +132,7 @@ dataset_template = {
 }
 ```
 
-### Classifying the Ground Truth
-
-TODO
+#### Dataset Templates Use
 
 ## Scoring Datasets
 
