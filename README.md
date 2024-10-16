@@ -3,7 +3,7 @@ Note (October 15, 2024): Cleaning up this code is a work in progress. This repo 
 
 # RATE (Rewrite-based Attribute Treatment Estimators)
 
-This code runs the experiments in [RATE: Score Reward Models with Imperfect Rewrites of Rewrites.](https://arxiv.org/abs/2410.11348).
+This code runs the experiments in [RATE: Score Reward Models with Imperfect Rewrites of Rewrites](https://arxiv.org/abs/2410.11348).
 
 TODO: Summary of the paper and experiments
 
