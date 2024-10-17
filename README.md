@@ -9,6 +9,8 @@ TODO: Summary of the paper and experiments
 
 ## Environment Setup
 
+## Conda Environment
+
 First, install the conda environment located in the root of the directory:
 ```
 conda env create -f environment.yaml
@@ -49,18 +51,20 @@ Each of these can be run separately--see the appropriate section for more detail
 
 We use a single config file for all of the settings to run experiments. The config file is broken up into the three "phases" of the experiment and the settings for each are separate.
 
+Details on the settings for each experiment are in their section, but here is an example config file for the IMDB dataset, rewriting on the concept "length" and scoring using the ArmoRM reward model.
+
 ```yaml
 smoke_test: true
 rewrites:
-  dataset_name: "helpsteer_helpfulness" # This is used in a factory function to import the dataset template
+  dataset_name: "imdb_length" # This is used in a factory function to import the dataset template, must match a template in dataset_templates/
 scoring:
   model: "armorm" # Choices: "distilbert_positive", "distilbert_negative", "deberta", "armorm", "sfairxc", "ncsoft"
   dataset_folder: "scored" # Choices: "rewrites", "scored"
   dataset_name: "imdb_length" # Note: used in filename so update to match the dataset filename below (INCLUDE CONCEPT)
   dataset_filename: "archive/imdb_length_sfairxc_scored_20240918_195038.jsonl"
 effects:
-  dataset_name: "imdb" # Note to make sure this matches the filename; is used to create filename
-  concept: "sentiment"
+  dataset_name: "imdb" # Note: this is used to create the filename for the calculated effects
+  concept: "length"
   score: "armorm"
   reward_key: "ArmoRM" # Note: This is the key for the reward in the dataset
   dataset_filename: "imdb_sentiment_complete_scored_20240919_152739.jsonl"
@@ -83,27 +87,29 @@ To generate datasets, we go through the following process:
 - Classify the ground truth of the target concept on each example
 - Make calls to the [OpenAI batch API](https://platform.openai.com/docs/guides/batch) to generate rewrites and rewrites of rewrites on the target concept
 
+### Dataset Templates
+
 Each dataset is managed by a dataset template that lives in ```dataset_templates```.
 
-When you have created a template for your experiment (and updated the [config yaml file](#config-files) with the appropriate settings), you can schedule this as a SLURM job using Make:
+The dataset template specifies the following:
+- How to load the baseline dataset
+- How to classify the "ground truth" for each example
+  - This could be a ```lambda``` function on each example in the dataset or some other form of classifier
+- The "question" and the "response" for the example when scoring using a reward model
+- The prompt passed to the OpenAI API to generate rewrites
+  - Note: The same prompt is used for both rewrites and rewrites of rewrites
 
-```
-make create_dataset
-```
+After running this script, the completed dataset and the intermediate files used for API submission will be saved to a ```data``` folder in the project directory specified in your [```.env``` file](#env-file).
 
-### Datasets
+#### Example Dataset Template
 
-The datasets we used in our experiments are:
-- [HelpSteer](https://huggingface.co/datasets/nvidia/HelpSteer)
-- [IMDB](https://huggingface.co/datasets/stanfordnlp/imdb)
-- [HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf)
-- [ELI5](https://facebookresearch.github.io/ELI5/index.html)
+Here is an example dataset template.
 
-### Classifying the Ground Truth
-
-TODO
-
-### Dataset Templates
+Key things to notice:
+- This dataset is available on Huggingface so is loaded directly using ```load_dataset```.
+- In this example, we are using "helpfulness" as our concept (denoted by "w" in our notation) to modify - we make this more specific for rewrites by specifying W=1 as "polite and helpful" and W=0 as "curt and unhelpful"
+- Each example in the HelpsSteer dataset has a human annotated score from 0-5. We define the "ground truth" value of "helpfulness" to be 1 if the response is scored 3 or 4 and 0 otherwise. We implement this by passing a ```lambda``` function as the ```w_classifier``` that extracts the human annotated value from each example.
+- We also need to specify a "question" and "response" for each example so that we can score using our reward models. This dataset is structured as "prompt" and "response" so we define a ```lambda``` function to extract these.
 
 ```python
 from datasets import load_dataset
@@ -131,6 +137,28 @@ dataset_template = {
     "temperature": 0.7,
 }
 ```
+
+### Make Command for Dataset Generation
+
+When you have created a template for your dataset (and updated the [config yaml file](#config-files) with the appropriate settings), you can schedule this as a SLURM job using Make:
+
+```
+make create_dataset
+```
+
+### Datasets
+
+The datasets we used in our experiments are:
+- [HelpSteer](https://huggingface.co/datasets/nvidia/HelpSteer)
+- [IMDB](https://huggingface.co/datasets/stanfordnlp/imdb)
+- [HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf)
+- [ELI5](https://facebookresearch.github.io/ELI5/index.html)
+
+### Classifying the Ground Truth
+
+TODO
+
+
 
 #### Dataset Templates Use
 
