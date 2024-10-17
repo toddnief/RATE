@@ -9,7 +9,7 @@ TODO: Summary of the paper and experiments
 
 ## Environment Setup
 
-## Conda Environment
+### Conda Environment
 
 First, install the conda environment located in the root of the directory:
 ```bash
