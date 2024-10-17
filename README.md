@@ -12,12 +12,12 @@ TODO: Summary of the paper and experiments
 ## Conda Environment
 
 First, install the conda environment located in the root of the directory:
-```
+```bash
 conda env create -f environment.yaml
 ```
 
 If you plan to run the scripts directly, activate the environment (If you plan to use the Make commands, the Make command will manage the environment for you):
-```
+```bash
 conda activate rate
 ```
 
@@ -30,7 +30,7 @@ The scripts expect a ```.env``` file located in the root of the directory with t
 - A [SLURM partition](https://slurm.schedmd.com/quickstart.html) for Make commands to use
 
 Here's an example ```.env``` file:
-```
+```bash
 OPENAI_API_KEY="yOuRoPeNaIaPiKeY123"
 PROJECT_DIR="path/to/where/the/data/will/save"
 GROUP_NAME="users"
@@ -142,7 +142,7 @@ dataset_template = {
 
 When you have created a template for your dataset (and updated the [config yaml file](#config-files) with the appropriate settings), you can schedule this as a SLURM job using Make:
 
-```
+```bash
 make create_dataset
 ```
 
@@ -154,28 +154,60 @@ The datasets we used in our experiments are:
 - [HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf)
 - [ELI5](https://facebookresearch.github.io/ELI5/index.html)
 
-### Classifying the Ground Truth
-
-TODO
-
-
-
-#### Dataset Templates Use
-
 ## Scoring Datasets
 
 Note: You can pass a config file to the Make command (which is useful for scheduling multiple jobs with different configurations via SLURM). If you don't pass a value, this defaults to ```config.yaml```.:
-```
+```bash
 make score_dataset CONFIG=custom_config.yaml
 ```
 
 ### Scoring Templates
 
-TODO
+```python
+import torch
+from constants import DEVICE
+from torch.cuda.amp import autocast
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+reward_model_path = "RLHFlow/ArmoRM-Llama3-8B-v0.1"
+reward_model = AutoModelForSequenceClassification.from_pretrained(
+    reward_model_path, trust_remote_code=True
+).to(DEVICE)
+reward_tokenizer = AutoTokenizer.from_pretrained(reward_model_path)
+
+
+def _score_example(
+    model,
+    tokenizer,
+    question,
+    answer,
+    device=DEVICE,
+    truncation=True,
+):
+    messages = [
+        {"role": "user", "content": question},
+        {"role": "assistant", "content": answer},
+    ]
+    with torch.no_grad():
+        with autocast():
+            model = model.to(device)
+            inputs = tokenizer.apply_chat_template(
+                messages,
+                return_tensors="pt",
+                padding=True,
+                truncation=truncation,
+            ).to(device)
+            outputs = model(inputs)
+            reward = outputs.score.float().item()
+    del inputs, outputs  # Explicitly free up memory to prevent OOM
+    return reward
+```
 
 ## Calculating Treatment Effects
 
-TODO
+```bash
+make treatment_effect
+```
 
 ## Visualizing Results
 
