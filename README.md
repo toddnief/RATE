@@ -23,7 +23,7 @@ conda activate rate
 
 ### .env File
 
-The scripts expect a ```.env``` file located in the root of the directory with three things:
+Create a ```.env``` file located in the root of the directory with three things:
 - An OpenAI API key
 - A project directory (for saving datasets rewritten and scored datasets - doesn't have to be the same as the location of the script)
 - A permissions group (the scripts automatically update the permissions of saved files to be accessible by the permissions group - if you don't have a group you'd like to use here and you're not worried about security of the files, ```users``` is fine)
