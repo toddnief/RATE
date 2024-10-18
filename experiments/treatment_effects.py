@@ -1,3 +1,5 @@
+"""Functions for calculating treatment effects from a scored dataset."""
+
 import pprint
 from pathlib import Path
 
@@ -11,7 +13,6 @@ from constants import (  # noqa
     SCORED_DIR,
     logging,
 )
-
 from utils import load_dataset_from_json, write_to_json
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -57,6 +58,8 @@ def calculate_rewrite_effect(
 
 
 def calculate_average_treatment_effects(dataset, **effects_template):
+    # TODO: This is confusing and should be cleaned up
+    # The default should actually be between the rewritten rewrite and the rewrite
     reward_key = effects_template.get("reward_key", "reward")
     original = effects_template.get("original", "rewritten rewrite")
     rewrite = effects_template.get("rewrite", "rewrite")

@@ -220,6 +220,25 @@ make score_dataset CONFIG=custom_config.yaml
 
 ## Calculating Treatment Effects
 
+After scoring a dataset, we calculate the average treatment effect using our rewritten counterfactual examples.
+
+This defaults to calculating the effect size between the rewritten rewrite and the rewrite.
+
+Here is an example setup in ```config.yaml``` — specify the key for the saved reward in the dataset and the dataset_filename.
+
+```yaml
+effects:
+  dataset_name: "imdb" # Note: this is used to create the filename for the calculated effects
+  concept: "length"
+  score: "armorm"
+  reward_key: "ArmoRM" # Note: This is the key for the reward in the dataset
+  dataset_filename: "imdb_sentiment_complete_scored_20240919_152739.jsonl"
+```
+
+### Make Command for Calculating Treatment Effects
+
+You can use a make command for calculating treatment effects on SLURM-based systems.
+
 ```bash
 make treatment_effect
 ```
@@ -228,3 +247,6 @@ make treatment_effect
 
 TODO
 
+## Synthetic Experiments
+
+TODO
