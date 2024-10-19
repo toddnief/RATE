@@ -2,6 +2,7 @@
 
 import pprint
 from pathlib import Path
+from typing import Any, Dict, Tuple
 
 import numpy as np
 import yaml
@@ -18,7 +19,19 @@ from utils import load_dataset_from_json, write_to_json
 SCRIPT_DIR = Path(__file__).resolve().parent
 
 
-def calculate_unpaired_treatment_effect(treated, untreated):
+def calculate_unpaired_treatment_effect(
+    treated: np.ndarray, untreated: np.ndarray
+) -> Tuple[float, float]:
+    """
+    Calculates the treatment effect and standard error for unpaired data.
+
+    Args:
+        treated: An array of outcomes for the treated group.
+        untreated: An array of outcomes for the untreated group.
+
+    Returns:
+        A tuple containing the treatment effect (difference in means) and the standard error of the difference.
+    """
     treated_effect = np.mean(treated) - np.mean(untreated)
     stderr = np.sqrt(
         np.var(treated, ddof=1) / len(treated)
@@ -28,8 +41,26 @@ def calculate_unpaired_treatment_effect(treated, untreated):
 
 
 def calculate_rewrite_effect(
-    dataset, original="original", rewrite="rewritten rewrite", **effects_template
-):
+    dataset: dict,
+    original: str = "original",
+    rewrite: str = "rewritten rewrite",
+    **effects_template,
+) -> dict:
+    """
+    Calculate the rewrite effect by comparing the reward model's scores between original and rewritten examples.
+
+    Args:
+        dataset: A dictionary of examples, where each example contains a reward model score for both the original
+                 and rewritten versions.
+        original: The key for the original text
+        rewrite: The key for the rewritten text
+        **effects_template: Additional keyword arguments, including "reward_key" for the reward model name.
+
+    Returns:
+        A dictionary containing:
+        - The mean and standard error of the rewrite effect for examples where "w_original" is True (w_1).
+        - The mean and standard error of the rewrite effect for examples where "w_original" is False (w_0).
+    """
     reward_model_name = effects_template.get("reward_key", "reward")
 
     w_1 = []
@@ -57,7 +88,31 @@ def calculate_rewrite_effect(
     }
 
 
-def calculate_average_treatment_effects(dataset, **effects_template):
+def calculate_average_treatment_effects(
+    dataset: Dict[str, Any], **effects_template
+) -> Dict[str, float]:
+    """
+    Calculate the average treatment effects (ATE, ATT, ATU) and their standard errors.
+
+    This function computes:
+    - ATE (Average Treatment Effect)
+    - ATT (Average Treatment Effect on the Treated)
+    - ATU (Average Treatment Effect on the Untreated)
+    - A naive effect
+    It uses both paired and unpaired treatment effect calculations, with standard errors for each estimate.
+
+    Args:
+        dataset: A dictionary where each key is an identifier, and the value is another dictionary
+                 containing outcome data for different reward models (keys for "original" and "rewrite" outcomes).
+        **effects_template: Optional arguments that specify the reward model's keys.
+                            Default keys:
+                            - reward_key: "reward"
+                            - original: "rewritten rewrite"
+                            - rewrite: "rewrite"
+
+    Returns:
+        A dictionary containing treatment effects and standard errors
+    """
     # TODO: This is confusing and should be cleaned up
     # The default should actually be between the rewritten rewrite and the rewrite
     reward_key = effects_template.get("reward_key", "reward")
@@ -117,7 +172,16 @@ def calculate_average_treatment_effects(dataset, **effects_template):
     }
 
 
-def calculate_treatment_corrections(effects):
+def calculate_treatment_corrections(effects: Dict[str, Any]) -> Dict[str, float]:
+    """
+    Calculate corrected treatment effects (ATT, ATU, ATE) and their standard errors using bias corrections
+
+    Args:
+        effects: A dictionary containing treatment effects and standard errors
+
+    Returns:
+        A dictionary containing corrected treatment effects
+    """
     assert "Y1_count" in effects, "Please use calculate_treatment_effects()"
 
     b0 = effects["rewrite_effect_w_0"]
@@ -174,7 +238,21 @@ def calculate_adjustment_effects(dataset, **effects_template):
     # Return the results
 
 
-def calculate_treatment_effects(dataset, adjustment=False, **effects_template):
+def calculate_treatment_effects(
+    dataset: Dict[str, Any], adjustment: bool = False, **effects_template
+) -> Dict[str, float]:
+    """
+    Calculate treatment effects (ATE, ATT, ATU) with optional covariate adjustment and bias correction
+
+    Args:
+        dataset: A dictionary containing the dataset, where each entry is another dictionary with reward values.
+        adjustment: A boolean flag to indicate whether covariate adjustment should be applied (default is False).
+        **effects_template: Optional keyword arguments to specify the keys for original and rewrite conditions,
+                            as well as the reward model (e.g., "reward_key").
+
+    Returns:
+        A dictionary containing treatment effects and standard errors
+    """
     original = effects_template.get("original", "rewritten rewrite")
     rewrite = effects_template.get("rewrite", "rewrite")
 
