@@ -1,3 +1,5 @@
+"""Constants and configuration for experiments"""
+
 import logging
 import os
 from datetime import datetime
