@@ -1,4 +1,4 @@
-"""Handles API calls to OpenAI's GPT-4 API"""
+"""Handles API calls to OpenAI's API"""
 
 import sys
 import time
@@ -16,17 +16,17 @@ def get_gpt4_completion(
     max_tokens: int = 2048,
 ) -> str:
     """
-    Generate a text completion using GPT-4 via the provided client
+    Generate a text completion via the provided client
 
     Args:
-        client: The API client instance used to interact with the GPT-4 model
-        user_prompt: The input prompt to be sent to the GPT-4 model for generating a completion
+        client: The OpenAI API client
+        user_prompt: The input prompt
         temperature: A float between 0 and 1 that controls the randomness of the generated output
-        model_id: The identifier for the GPT-4 model to use
+        model_id: The identifier for the model to use
         max_tokens: The maximum number of tokens to generate in the completion
 
     Returns:
-        A string containing the GPT-4 model's completion response based on the provided user prompt.
+        A string containing the model's completion response based on the provided user prompt.
         If an error occurs during the API request, the string "error" is returned.
     """
     try:

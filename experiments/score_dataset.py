@@ -1,13 +1,14 @@
+""""""
+
 import argparse
 import json
 from pathlib import Path
 
 import torch
 import yaml
-from constants import (  # noqa
+from constants import (
     DEVICE,
     FILE_ID,
-    REWRITES_DATASET_NAME,
     REWRITES_DIR,
     SCORED_DIR,
     SMOKE_TEST,
@@ -16,7 +17,6 @@ from constants import (  # noqa
 )
 from scoring_template import load_scoring_utils
 from torch.cuda.amp import autocast
-
 from utils import (
     load_dataset_from_json,
     serialize_experiment_template,
