@@ -49,7 +49,9 @@ Each of these can be run separately--see the appropriate section for more detail
 
 ### Config Files
 
-We use a single config file for all of the settings to run experiments. The config file is broken up into the three "phases" of the experiment and the settings for each are separate.
+We use a single config file for all of the settings to run experiments. The default config file is located at ```experiments/config.yaml```. (Note: You can make additional config files for different experiment setups, which is necessary if you plan to schedule multiple experiments via SLURM).
+
+The config file is broken up into the three "phases" of the experiment and the settings for each are separate.
 
 Details on the settings for each experiment are in their section, but here is an example config file for the IMDB dataset, rewriting on the concept "length" and scoring using the ArmoRM reward model.
 
