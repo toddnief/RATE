@@ -37,6 +37,10 @@ GROUP_NAME="users"
 PARTITION="general"
 ```
 
+### File Locations
+
+TODO: Where does stuff actually save? What directories does this create?
+
 ## Experiment Structure
 
 There are four key parts of this experiment:
