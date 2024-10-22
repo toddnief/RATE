@@ -140,6 +140,14 @@ dataset_template = {
 
 ### Make Command for Dataset Generation
 
+> **Caution:** Ensure that no Conda environment (other than the default `base`) is active before running the Makefile. If you have another environment active, deactivate it with:
+>
+> ```bash
+> conda deactivate
+> ```
+
+The Makefile will automatically manage the Conda environment for you during the job execution.
+
 When you have created a template for your dataset (and updated the [config yaml file](#config-files) with the appropriate settings), you can schedule this as a SLURM job using Make:
 
 ```bash
