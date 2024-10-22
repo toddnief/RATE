@@ -31,10 +31,10 @@ Create a ```.env``` file located in the root of the directory with three things:
 
 Here's an example ```.env``` file:
 ```bash
-OPENAI_API_KEY="yOuRoPeNaIaPiKeY123"
-PROJECT_DIR="path/to/where/the/data/will/save"
-GROUP_NAME="users"
-PARTITION="general"
+OPENAI_API_KEY=yOuRoPeNaIaPiKeY123
+PROJECT_DIR=path/to/where/the/data/will/save
+GROUP_NAME=users
+PARTITION=general
 ```
 
 ### File Locations
