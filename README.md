@@ -140,7 +140,7 @@ dataset_template = {
 
 ### Make Command for Dataset Generation
 
-> **Caution:** Ensure that no Conda environment (other than the default `base`) is active before running the Makefile. If you have another environment active, deactivate it with:
+> **Caution:** Ensure that no Conda environment (other than the default `base`) is active before running Make commands. If you have another environment active, deactivate it with:
 >
 > ```bash
 > conda deactivate
