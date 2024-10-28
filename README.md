@@ -172,8 +172,8 @@ These are the relevant fields in the yaml file. Make sure the ```model``` field 
 scoring:
   model: "armorm" # Choices: "distilbert_positive", "distilbert_negative", "armorm", "sfairxc", "ncsoft"
   dataset_folder: "scored" # Choices: "rewrites", "scored"
-  dataset_filename: "archive/imdb_length_sfairxc_scored_20240918_195038.jsonl"
-  dataset_name: "imdb_length" # Note: used in output filename so update to match the dataset filename below (INCLUDE CONCEPT)
+  dataset_filename: "imdb_length_armorm_scored_20240918_195038.jsonl"
+  dataset_name: "imdb_length" # Note: used in output filename so update to match the dataset_name below (INCLUDE CONCEPT)
 ```
 
 ### Scoring Templates
@@ -246,7 +246,7 @@ effects:
   concept: "length"
   score: "armorm"
   reward_key: "ArmoRM" # Note: This is the key for the reward in the dataset
-  dataset_filename: "imdb_sentiment_complete_scored_20240919_152739.jsonl"
+  dataset_filename: "imdb_length_complete_scored_20240918_195038.jsonl"
 ```
 
 ### Make Command for Calculating Treatment Effects
