@@ -242,7 +242,7 @@ Here is an example setup in ```config.yaml``` — specify the key for the saved 
 
 ```yaml
 effects:
-  dataset_name: "imdb" # Note: this is used to create the filename for the calculated effects
+  dataset_name: "imdb_length" # Note: this is used to create the filename for the calculated effects
   concept: "length"
   score: "armorm"
   reward_key: "ArmoRM" # Note: This is the key for the reward in the dataset
