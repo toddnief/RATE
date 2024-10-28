@@ -170,7 +170,6 @@ if __name__ == "__main__":
 
     # Note: Lazy loads config constants
     load_config(yaml_path)
-
     with open(yaml_path, "r") as f:
         config = yaml.safe_load(f)
 
@@ -211,7 +210,6 @@ if __name__ == "__main__":
         client,
         **dataset_template,
     )
-
     dataset_filename = (
         REWRITES_DIR / f"{dataset_template['dataset_name']}_dataset_{FILE_ID}.json"
     )
