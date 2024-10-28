@@ -11,7 +11,6 @@ from constants import (
     FILE_ID,
     REWRITES_DIR,
     SCORED_DIR,
-    SMOKE_TEST,
     load_config,
     logging,
 )
@@ -108,6 +107,8 @@ if __name__ == "__main__":
 
     with open(yaml_path, "r") as f:
         config = yaml.safe_load(f)
+
+    SMOKE_TEST = config["smoke_test"]
 
     scoring_template = load_scoring_utils(config["scoring"]["model"])
 

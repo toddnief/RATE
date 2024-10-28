@@ -13,7 +13,6 @@ from constants import (
     FILE_ID,
     REWRITES_DATASET_NAME,
     REWRITES_DIR,
-    SMOKE_TEST,
     load_config,
     logging,
 )
@@ -178,6 +177,7 @@ if __name__ == "__main__":
     load_dotenv()
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     REWRITES_DATASET_NAME = config["rewrites"]["dataset_name"]
+    SMOKE_TEST = config["smoke_test"]
 
     def load_rewrite_template(template_name):
         try:
