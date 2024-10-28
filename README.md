@@ -39,7 +39,7 @@ PARTITION=general
 
 ### File Locations
 
-TODO: Where does stuff actually save? What directories does this create?
+TODO: Where does stuff actually save? What directories does this create? Clarify that the timestamps are added to the filenames, so note the filename for scoring and calculating effects. 
 
 ## Experiment Structure
 
@@ -246,7 +246,7 @@ effects:
   concept: "length"
   score: "armorm"
   reward_key: "ArmoRM" # Note: This is the key for the reward in the dataset
-  dataset_filename: "imdb_length_complete_scored_20240918_195038.jsonl"
+  dataset_filename: "imdb_length_complete_scored_20240919_152739.jsonl"
 ```
 
 ### Make Command for Calculating Treatment Effects
