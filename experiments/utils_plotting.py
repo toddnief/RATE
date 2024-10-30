@@ -12,8 +12,8 @@ def rewrite_bias(effects_data):
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
-    # Create the plot with two subplots
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6), dpi=300)
+    # Create the plot with three subplots
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6), dpi=300)
 
     # Define colors for each effect
     colors = [
@@ -22,21 +22,37 @@ def rewrite_bias(effects_data):
         '#D62728', '#FF6A6A'   # Red pair
     ]
 
-    for idx, ax in enumerate([ax1, ax2]):
-        rename_dict={'ATE_stderr_naive': 'ATE_naive_stderr', 'ATT_stderr_naive': 'ATT_naive_stderr', 'ATU_stderr_naive': 'ATU_naive_stderr'}
+    # Titles for each subplot
+    titles = [
+        "FsfairX-LLAMA3-RM-v0.1",
+        "NCSOFT/Llama-3-OffsetBias-RM-8B",
+        "ArmoRM"
+    ]
+
+    # Renaming dictionary for consistency
+    rename_dict = {
+        'ATE_stderr_naive': 'ATE_naive_stderr', 
+        'ATT_stderr_naive': 'ATT_naive_stderr', 
+        'ATU_stderr_naive': 'ATU_naive_stderr'
+    }
+
+    for idx, ax in enumerate(axes):
+        # Rename fields in the current dataset entry if they exist
+        for key, new_key in rename_dict.items():
+            if key in effects_data[idx]:
+                effects_data[idx][new_key] = effects_data[idx].pop(key)
 
         # Prepare the data
-        for key, value in rename_dict.items():
-            if key in rename_dict:
-                effects_data[idx][rename_dict[key]] = effects_data[idx][key]
-
-        print(effects_data[idx])
-
         data = pd.DataFrame({
-            'Effect': ['ATE', 'ATE Naive', 'ATT', 'ATT Naive', 'ATU', 'ATU Naive'],
-            'Value': [effects_data[idx][f'{effect}']/effects_data[idx]['reward_std'] for effect in ['ATE', 'ATE_naive', 'ATT', 'ATT_naive', 'ATU', 'ATU_naive']],
-            'Stderr': [effects_data[idx][f'{effect}_stderr']/effects_data[idx]['reward_std'] for effect in ['ATE', 'ATE_naive', 'ATT', 'ATT_naive', 'ATU', 'ATU_naive']]
+            'Effect': [
+                'ATE (Rewrite)', r'ATE (Rewrite$^2$)', 
+                'ATT (Rewrite)', r'ATT (Rewrite$^2$)', 
+                'ATU (Rewrite)', r'ATU (Rewrite$^2$)'
+            ],
+            'Value': [effects_data[idx][f'{effect}'] / effects_data[idx]['reward_std'] for effect in ['ATE', 'ATE_naive', 'ATT', 'ATT_naive', 'ATU', 'ATU_naive']],
+            'Stderr': [effects_data[idx][f'{effect}_stderr'] / effects_data[idx]['reward_std'] for effect in ['ATE', 'ATE_naive', 'ATT', 'ATT_naive', 'ATU', 'ATU_naive']]
         })
+
 
         # Calculate confidence intervals
         data['CI_lower'] = data['Value'] - 1.96 * data['Stderr']
@@ -48,24 +64,20 @@ def rewrite_bias(effects_data):
                     alpha=0.8, edgecolor='black')
 
         # Add error bars
-        ax.errorbar(x=data.index, y=data['Value'], yerr=1.96*data['Stderr'], 
+        ax.errorbar(x=data.index, y=data['Value'], yerr=1.96 * data['Stderr'], 
                     fmt='none', color='black', capsize=5, capthick=2, elinewidth=2)
 
         # Customize the plot
         ax.set_ylabel('Effect Size', fontsize=14)
         ax.set_xlabel('')
         ax.axhline(y=0, color='gray', linestyle='--', linewidth=1)
-        if idx == 0:
-            ax.set_title("Model: ArmoRM, Concept: Length, Data: ELI5", fontsize=14, fontweight='bold')
-        else:
-            ax.set_title("Model: ArmoRM, Concept: Sentiment, Data: IMDB", fontsize=14, fontweight='bold')
+        ax.set_title(titles[idx], fontsize=14, fontweight='bold')
 
         # Rotate x-axis labels
         ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
-        ax.tick_params(axis='both', which='major', labelsize=18)
+        ax.tick_params(axis='both', which='major', labelsize=12)
 
     plt.suptitle('Correcting for Rewrite Bias', fontsize=22, fontweight='bold')
-
     plt.tight_layout()
     plt.show()
 
