@@ -268,7 +268,7 @@ effects:
 You can use a make command for calculating treatment effects on SLURM-based systems.
 
 ```bash
-make treatment_effect
+make treatment_effects
 ```
 
 ## Visualizing Results
