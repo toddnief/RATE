@@ -257,9 +257,10 @@ Here is an example setup in ```config.yaml``` — specify the key for the saved 
 ```yaml
 effects:
   dataset_name: "imdb_length" # Note: this is used to create the filename for the calculated effects
+  dataset_folder: null # null to load directly from the scored dataset_folder. Or, specifiy a subdirectory
   concept: "length"
   score: "armorm"
-  reward_key: "ArmoRM" # Note: This is the key for the reward in the dataset
+  reward_key: "RLHFlow/ArmoRM-Llama3-8B-v0.1" # Note: This is the key for the reward in the dataset
   dataset_filename: "imdb_length_armorm_smoke_test_scored_20241104_111220.jsonl"
 ```
 
