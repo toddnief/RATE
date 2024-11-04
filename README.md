@@ -39,7 +39,7 @@ PARTITION=general
 
 ### File Locations
 
-TODO: Where does stuff actually save? What directories does this create?
+TODO: Where does stuff actually save? What directories does this create? Clarify that the timestamps are added to the filenames, so note the filename for scoring and calculating effects. 
 
 ## Experiment Structure
 
@@ -171,10 +171,12 @@ These are the relevant fields in the yaml file. Make sure the ```model``` field 
 ```yaml
 scoring:
   model: "armorm" # Choices: "distilbert_positive", "distilbert_negative", "armorm", "sfairxc", "ncsoft"
-  dataset_folder: "scored" # Choices: "rewrites", "scored"
-  dataset_filename: "archive/imdb_length_sfairxc_scored_20240918_195038.jsonl"
-  dataset_name: "imdb_length" # Note: used in output filename so update to match the dataset filename below (INCLUDE CONCEPT)
+  dataset_folder: "rewrites" # Choices: "rewrites", "scored"
+  dataset_filename: "imdb_length_dataset_20241028_142301_smoke_test.json"
+  dataset_name: "imdb_length" # Note: used in output filename so update to match the dataset_name below (INCLUDE CONCEPT)
 ```
+
+Note: when scoring a dataset for the first time, use ```dataset_folder: "rewrites"```. If you would like to score additional reward models on this same data, you will need to change to ```dataset_folder: "scored"``` in order to append to existing scored data. In either case, ```dataset_filename``` is the name of the file in said directory which should be scored.
 
 ### Scoring Templates
 
@@ -242,11 +244,11 @@ Here is an example setup in ```config.yaml``` — specify the key for the saved 
 
 ```yaml
 effects:
-  dataset_name: "imdb" # Note: this is used to create the filename for the calculated effects
+  dataset_name: "imdb_length" # Note: this is used to create the filename for the calculated effects
   concept: "length"
   score: "armorm"
   reward_key: "ArmoRM" # Note: This is the key for the reward in the dataset
-  dataset_filename: "imdb_sentiment_complete_scored_20240919_152739.jsonl"
+  dataset_filename: "imdb_length_complete_scored_20240919_152739.jsonl"
 ```
 
 ### Make Command for Calculating Treatment Effects
