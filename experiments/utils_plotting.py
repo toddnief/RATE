@@ -104,7 +104,7 @@ def plot_scores(template, SCORED_DIR):
     sns.kdeplot(rewrite_scores, label="Rewrite", color=colors[1], fill=True, alpha=0.5, linewidth=2, ax=ax)
 
     # Set titles and labels
-    ax.set_title(f"{template['dataset_name']} {template['concept']} ArmoRM Rewards", fontsize=20, fontweight='bold', pad=20)
+    ax.set_title(f"{template['dataset_name']} {template['concept']} {template['score']} Rewards", fontsize=20, fontweight='bold', pad=20)
     ax.set_xlabel("Reward", fontsize=12)
     ax.set_ylabel("Density", fontsize=12)
     ax.tick_params(axis='both', which='major', labelsize=10)
@@ -120,7 +120,7 @@ def plot_scores(template, SCORED_DIR):
     plt.tight_layout()
     plt.show()
 
-def rewrite_bias(effects_data):
+def rewrite_bias(effects_data, titles):
     sns.set_theme(style="whitegrid", font="serif")
     plt.rcParams['font.size'] = 14
     plt.rcParams['font.family'] = 'serif'
@@ -134,13 +134,6 @@ def rewrite_bias(effects_data):
         '#FF7F0E', '#FFA54F',  # Orange pair
         '#1F77B4', '#6CA6CD',  # Blue pair
         '#D62728', '#FF6A6A'   # Red pair
-    ]
-
-    # Titles for each subplot
-    titles = [
-        "FsfairX-LLAMA3-RM-v0.1",
-        "NCSOFT/Llama-3-OffsetBias-RM-8B",
-        "ArmoRM"
     ]
 
     # Renaming dictionary for consistency
@@ -397,7 +390,7 @@ def synthetic(data_list, effects_templates, target_concept, spurious_concept):
     plt.tight_layout()
     plt.show()
 
-def att_atu(effects_data, reward_std):
+def att_atu(effects_data, reward_std, model_name):
     sns.set_theme(style="whitegrid", font="serif")
     plt.rcParams['font.size'] = 14
     plt.rcParams['font.family'] = 'serif'
@@ -429,7 +422,7 @@ def att_atu(effects_data, reward_std):
                 fmt='none', color='black', capsize=5, capthick=2, elinewidth=2)
 
     # Customize the plot
-    ax.set_title('Complexity Treatment Effects (FsfairX-LLaMA3-RM-v0.1)', fontsize=16, fontweight='bold', pad = 20)
+    ax.set_title(f'Complexity Treatment Effects ({model_name})', fontsize=16, fontweight='bold', pad = 20)
     ax.set_ylabel('Effect Size', fontsize=14)
     ax.set_xticklabels(['W = 1 Responses', 'W = 0 Responses'], fontsize=14)
     ax.set_xlabel('')
