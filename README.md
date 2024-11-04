@@ -248,7 +248,7 @@ effects:
   concept: "length"
   score: "armorm"
   reward_key: "ArmoRM" # Note: This is the key for the reward in the dataset
-  dataset_filename: "imdb_length_complete_scored_20240919_152739.jsonl"
+  dataset_filename: "imdb_length_armorm_smoke_test_scored_20241104_111220.jsonl"
 ```
 
 ### Make Command for Calculating Treatment Effects
