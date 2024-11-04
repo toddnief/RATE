@@ -171,8 +171,8 @@ These are the relevant fields in the yaml file. Make sure the ```model``` field 
 ```yaml
 scoring:
   model: "armorm" # Choices: "distilbert_positive", "distilbert_negative", "armorm", "sfairxc", "ncsoft"
-  dataset_folder: "scored" # Choices: "rewrites", "scored"
-  dataset_filename: "imdb_length_armorm_scored_20240918_195038.jsonl"
+  dataset_folder: "rewrites" # Choices: "rewrites", "scored" (initially use "rewrites", then "scored" if you want to score additional reward models on this data)
+  dataset_filename: "imdb_length_template_20241028_142301_smoke_test.txt"
   dataset_name: "imdb_length" # Note: used in output filename so update to match the dataset_name below (INCLUDE CONCEPT)
 ```
 
