@@ -38,7 +38,7 @@ score_dataset:
 		--export=ALL,CONFIG=$(CONFIG) \
 		$(workdir)score_dataset.slurm
 
-.PHONY: treatment_effect
+.PHONY: treatment_effects
 treatment_effects:
 	${SBATCH} \
 		--partition=$(PARTITION) \
