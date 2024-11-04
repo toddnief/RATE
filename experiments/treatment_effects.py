@@ -171,82 +171,14 @@ def calculate_average_treatment_effects(
         "naive_effect_stderr": naive_effect_stderr,
     }
 
-
-def calculate_treatment_corrections(effects: Dict[str, Any]) -> Dict[str, float]:
-    """
-    Calculate corrected treatment effects (ATT, ATU, ATE) and their standard errors using bias corrections
-
-    Args:
-        effects: A dictionary containing treatment effects and standard errors
-
-    Returns:
-        A dictionary containing corrected treatment effects
-    """
-    assert "Y1_count" in effects, "Please use calculate_treatment_effects()"
-
-    b0 = effects["rewrite_effect_w_0"]
-    b0_stderr = effects["rewrite_effect_w_0_stderr"]
-    b1 = effects["rewrite_effect_w_1"]
-    b1_stderr = effects["rewrite_effect_w_1_stderr"]
-
-    alpha = effects["Y1_count"] / (effects["Y1_count"] + effects["Y0_count"])
-
-    bound_variance = lambda x, y: x**2 + y**2 + np.abs(2 * x * y)
-
-    ATT_corrected = effects["ATT"] + b0
-    ATT_corrected_stderr = np.sqrt(bound_variance(effects["ATT_stderr"], b0_stderr))
-
-    ATU_corrected = effects["ATU"] - b1
-    ATU_corrected_stderr = np.sqrt(bound_variance(effects["ATU_stderr"], -b1_stderr))
-
-    ATE_corrected = alpha * ATT_corrected + (1 - alpha) * ATU_corrected
-    ATE_corrected_alt = effects["ATE"] + alpha * b0 - b1 * (1 - alpha)
-    assert np.allclose(
-        ATE_corrected, ATE_corrected_alt
-    ), "The two ATE calculations should be equal"
-    ATE_stderr = effects["ATE_stderr"]
-    ATE_corrected_stderr = np.sqrt(
-        ATE_stderr**2
-        + alpha**2 * b0_stderr**2
-        + (1 - alpha) ** 2 * b1_stderr**2
-        + alpha * np.abs(2 * ATE_stderr * b0_stderr)
-        + (1 - alpha) * np.abs(2 * ATE_stderr * b1_stderr)
-        + alpha * (1 - alpha) * np.abs(2 * b0_stderr * b1_stderr)
-    )
-
-    return {
-        "ATT_corrected": ATT_corrected,
-        "ATT_corrected_stderr": ATT_corrected_stderr,
-        "ATU_corrected": ATU_corrected,
-        "ATU_corrected_stderr": ATU_corrected_stderr,
-        "ATE_corrected": ATE_corrected,
-        "ATE_corrected_stderr": ATE_corrected_stderr,
-    }
-
-
-def calculate_adjustment_effects(dataset, **effects_template):
-    "Perform adjustment for covariates. Condition on each covariate, calculate the treatment effects, and reweight."
-    raise NotImplementedError("Adjustment effects calculation not implemented yet.")
-    # Condition on the covariates
-
-    # Run the treatment effects calculation for each subpopulation
-
-    # Reweight the overall treatment effects by the proportion of each subpopulation
-
-    # Compute the adjusted std_err
-
-    # Return the results
-
-
 def calculate_treatment_effects(
-    dataset: Dict[str, Any], adjustment: bool = False, **effects_template
+    dataset: Dict[str, Any], **effects_template
 ) -> Dict[str, float]:
     """
     Calculate treatment effects (ATE, ATT, ATU) with optional covariate adjustment and bias correction
 
     Args:
         dataset: A dictionary containing the dataset, where each entry is another dictionary with reward values.
-        adjustment: A boolean flag to indicate whether covariate adjustment should be applied (default is False).
         **effects_template: Optional keyword arguments to specify the keys for original and rewrite conditions,
                             as well as the reward model (e.g., "reward_key").
 
@@ -302,15 +234,6 @@ def calculate_treatment_effects(
     effects["reward_std"] = pooled_std
     effects["Y1_count"] = Y1_count
     effects["Y0_count"] = Y0_count
-
-    corrected_effects = calculate_treatment_corrections(effects)
-    effects.update(corrected_effects)
-
-    if adjustment:
-        # Perform covariate adjustment
-        adjusted_effects = calculate_adjustment_effects(dataset, **effects_template)
-        effects.update(adjusted_effects)
-
     return effects
 
 
@@ -330,8 +253,10 @@ if __name__ == "__main__":
     logging.info(f"Running treatment effects for: {EXPERIMENT_NAME}")
 
     dataset_filename = effects_template["dataset_filename"]
-    logging.info(f"Loading dataset from: {dataset_filename}")
-    dataset = load_dataset_from_json(SCORED_DIR / "complete" / dataset_filename)
+    dataset_folder = effects_template["dataset_folder"]
+    dataset_path = SCORED_DIR / dataset_folder / dataset_filename if dataset_folder is not None else SCORED_DIR / dataset_filename
+    logging.info(f"Loading dataset from: {dataset_path}")
+    dataset = load_dataset_from_json(dataset_path)
 
     logging.info("Dataset loaded. Calculating treatment effects...")
     effects = calculate_treatment_effects(dataset, **effects_template)
