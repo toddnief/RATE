@@ -172,7 +172,7 @@ These are the relevant fields in the yaml file. Make sure the ```model``` field 
 scoring:
   model: "armorm" # Choices: "distilbert_positive", "distilbert_negative", "armorm", "sfairxc", "ncsoft"
   dataset_folder: "rewrites" # Choices: "rewrites", "scored"
-  dataset_filename: "imdb_length_template_20241028_142301_smoke_test.txt"
+  dataset_filename: "imdb_length_dataset_20241028_142301_smoke_test.json"
   dataset_name: "imdb_length" # Note: used in output filename so update to match the dataset_name below (INCLUDE CONCEPT)
 ```
 
