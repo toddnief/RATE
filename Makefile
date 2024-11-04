@@ -39,9 +39,9 @@ score_dataset:
 		$(workdir)score_dataset.slurm
 
 .PHONY: treatment_effect
-treatment_effect:
+treatment_effects:
 	${SBATCH} \
 		--partition=$(PARTITION) \
 		--output="$(output_file)" \
 		--error="$(err_file)" \
-		$(workdir)treatment_effect.slurm
+		$(workdir)treatment_effects.slurm

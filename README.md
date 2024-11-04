@@ -25,21 +25,33 @@ conda activate rate
 
 Create a ```.env``` file located in the root of the directory with three things:
 - An OpenAI API key
-- A project directory (for saving datasets rewritten and scored datasets - doesn't have to be the same as the location of the script)
+- A project directory (for saving datasets, rewrites, and scored datasets - doesn't have to be the same as the location of the script)
 - A permissions group (the scripts automatically update the permissions of saved files to be accessible by the permissions group - if you don't have a group you'd like to use here and you're not worried about security of the files, ```users``` is fine)
 - A [SLURM partition](https://slurm.schedmd.com/quickstart.html) for Make commands to use
 
 Here's an example ```.env``` file:
 ```bash
 OPENAI_API_KEY=yOuRoPeNaIaPiKeY123
-PROJECT_DIR=path/to/where/the/data/will/save
+PROJECT_DIR=path/to/project/directory
 GROUP_NAME=users
 PARTITION=general
 ```
 
-### File Locations
+### File Locations and Filenames
 
-TODO: Where does stuff actually save? What directories does this create? Clarify that the timestamps are added to the filenames, so note the filename for scoring and calculating effects. 
+Here is the expected file structure for the experiments (note that these directories will be created automatically in the project directory specified in the ```.env``` file):
+```
+project_dir/
+└── data/                     # Data directory specified in .env
+│  ├── batch_api/              # API artifacts stored here
+│  ├── rewrites/               # Rewritten datasets stored here
+│  ├── scored/                 # Scored datasets stored here
+│  ├── dataset_1/              # Raw dataset folders (e.g. ELI5, hh-rlhf, etc.)
+│  └── dataset_2/
+└── effects/                   # Calculated treatment effects stored here
+```
+
+The scripts will append the timestamp from when the script was run to each filename as a unique identifier (e.g. ```helpsteer_complexity_dataset_20240921_213510.json```) and will also save a template file that shows the configuration settings for the run (e.g. ```helpsteer_complexity_template_20240921_213510.txt```). **Make sure to update ```config.yaml``` to use the correct file for the experiment that you plan to run!***
 
 ## Experiment Structure
 
