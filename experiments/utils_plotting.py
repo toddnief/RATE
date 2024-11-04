@@ -1,10 +1,124 @@
+import json
+import random
+import os
+import re
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.lines import Line2D
 import numpy as np
 import seaborn as sns
 from collections import defaultdict
+from pathlib import Path
+from utils import load_dataset_from_json, write_to_json
+from treatment_effects import calculate_treatment_effects
 import pandas as pd
+
+def create_latex_tables_from_samples(file_paths, num_samples=10, max_text_length=100):
+    def load_json_lines(file_path):
+        with open(file_path, 'r') as file:
+            return [json.loads(line) for line in file]
+
+    def find_armo_rm_key(item):
+        return next((key for key in item.keys() if 'ArmoRM' in key), None)
+
+    def truncate_text(text, max_length):
+        return text[:max_length] + '...' if len(text) > max_length else text
+
+    def escape_latex(text):
+        latex_special_chars = {'&': r'\&', '%': r'\%', '$': r'\$', '#': r'\#', '_': r'\_', '{': r'\{', '}': r'\}', '~': r'\textasciitilde{}', '^': r'\^{}', '\\': r'\textbackslash{}'}
+        return ''.join(latex_special_chars.get(c, c) for c in text)
+
+    def format_reward(reward):
+        return f"{reward:.5f}" if isinstance(reward, (int, float)) else reward
+
+    def get_descriptive_title(file_name):
+        # Extract database and concept from file name
+        match = re.match(r'(\w+)_(\w+)_', file_name)
+        if match:
+            database, concept = match.groups()
+            database = database.upper() if database.lower() == 'eli5' else database.capitalize()
+            return f"{database}, {concept.capitalize()}"
+        return file_name  # Fallback to filename if pattern doesn't match
+
+    def create_table(data, file_name):
+        title = get_descriptive_title(file_name)
+        latex_table = f"\\subsection*{{{title}}}\n"
+        latex_table += r"\begin{tabular}{|p{0.22\textwidth}|p{0.22\textwidth}|p{0.22\textwidth}|p{0.22\textwidth}|}\hline" + "\n"
+        latex_table += r"Original & Rewrite & Rewrite of Rewrite & Reward \\ \hline" + "\n"
+
+        for item in data:
+            w_original = item.get('w_original', False)
+            original = escape_latex(truncate_text(item['completions'].get('original', 'N/A'), max_text_length))
+            rewrite = escape_latex(truncate_text(item['completions'].get('rewrite', 'N/A'), max_text_length))
+            rewrite_of_rewrite = escape_latex(truncate_text(item['completions'].get('rewritten rewrite', 'N/A'), max_text_length))
+            
+            armo_rm_key = find_armo_rm_key(item)
+            if armo_rm_key:
+                reward_original = format_reward(item[armo_rm_key].get('original', 'N/A'))
+                reward_rewrite = format_reward(item[armo_rm_key].get('rewrite', 'N/A'))
+                reward_rewrite_of_rewrite = format_reward(item[armo_rm_key].get('rewritten rewrite', 'N/A'))
+            else:
+                reward_original = reward_rewrite = reward_rewrite_of_rewrite = 'N/A'
+
+            latex_table += f"{original} (W = {1 if w_original else 0}) & "
+            latex_table += f"{rewrite} (W = {0 if w_original else 1}) & "
+            latex_table += f"{rewrite_of_rewrite} & "
+            latex_table += f"({reward_original}, {reward_rewrite}, {reward_rewrite_of_rewrite}) \\\\ \\hline\n"
+
+        latex_table += r"\end{tabular}" + "\n\n"
+        return latex_table
+
+    all_tables = []
+    for file_path in file_paths:
+        data = load_json_lines(file_path)
+        samples = random.sample(data, num_samples)
+        file_name = os.path.basename(file_path)
+        table = create_table(samples, file_name)
+        all_tables.append(table)
+
+    return '\n'.join(all_tables)
+
+def plot_scores(template, SCORED_DIR):
+    sns.set_theme(style="whitegrid", font="serif")
+    dataset_filename = Path(template["dataset_filename"])
+    scores = load_dataset_from_json(SCORED_DIR / "complete" / dataset_filename)
+    
+    # Extract scores
+    original_scores = []
+    rewrite_scores = []
+    
+    for key, data_point in scores.items():
+        original_scores.append(data_point[template["reward_key"]].get("original", 0))
+        rewrite_scores.append(data_point[template["reward_key"]].get("rewritten rewrite", 0))
+    
+    # Calculate the means for both original and rewrite scores
+    original_mean = np.mean(original_scores)
+    rewrite_mean = np.mean(rewrite_scores)
+    
+    # Plot setup
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=300)
+    colors = ["#1f77b4", "#ff7f0e"]
+    
+    # KDE plot for scores
+    sns.kdeplot(original_scores, label="Original", color=colors[0], fill=True, alpha=0.5, linewidth=2, ax=ax)
+    sns.kdeplot(rewrite_scores, label="Rewrite", color=colors[1], fill=True, alpha=0.5, linewidth=2, ax=ax)
+
+    # Set titles and labels
+    ax.set_title(f"{template['dataset_name']} {template['concept']} ArmoRM Rewards", fontsize=20, fontweight='bold', pad=20)
+    ax.set_xlabel("Reward", fontsize=12)
+    ax.set_ylabel("Density", fontsize=12)
+    ax.tick_params(axis='both', which='major', labelsize=10)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    # Custom legend
+    ax.legend(handles=[Line2D([0], [0], color=colors[0], linewidth=2, label="Original"),
+                       Line2D([0], [0], color=colors[1], linewidth=2, label="Rewrite")], 
+              title="Score Type", title_fontsize='14', fontsize=12, frameon=True, fancybox=True, shadow=True)
+    
+    # Show plot
+    plt.tight_layout()
+    plt.show()
 
 def rewrite_bias(effects_data):
     sns.set_theme(style="whitegrid", font="serif")
@@ -280,88 +394,6 @@ def synthetic(data_list, effects_templates, target_concept, spurious_concept):
     # Add grid lines
     plt.grid(True, linestyle='--', alpha=0.7)
     
-    plt.tight_layout()
-    plt.show()
-
-def synthetic_3way(data_list, effects_templates, target_concept, spurious_concept):
-    sns.set_theme(style="whitegrid", font="serif")
-    plt.rcParams["font.size"] = 14
-    plt.rcParams["font.family"] = "serif"
-    plt.rcParams["font.serif"] = ["Times New Roman"] + plt.rcParams["font.serif"]
-
-    plot_data = []
-    for data, template in zip(data_list, effects_templates):
-        correlation = (
-            int(template["dataset_filename"].split("_")[-1].split(".")[0]) / 10
-        )
-        for effect_type in ["naive_effect", "ATE_naive", "ATE"]:
-            if effect_type == "naive_effect":
-                effect_name = "Naive"
-                stderr = data["naive_effect_stderr"]
-            elif effect_type == "ATE_naive":
-                effect_name = r"$ATE\ (Rewrite)$"
-                stderr = data["ATE_stderr_naive"]
-            else:
-                effect_name = r"$ATE\ (Rewrite^{2})$"
-                stderr = data["ATE_stderr"]
-            effect_name
-            plot_data.append(
-                {
-                    "Correlation": correlation,
-                    "Effect Type": effect_name,
-                    "Effect Size": data[effect_type],
-                    "Lower CI": data[effect_type]
-                    - stderr * 1.96,
-                    "Upper CI": data[effect_type]
-                    + stderr * 1.96,
-                }
-            )
-
-    df = pd.DataFrame(plot_data)
-
-    # Set up the plot style and size (standardized)
-    sns.set_style("whitegrid")
-    plt.figure(figsize=(12, 4), dpi=300)  # Standardized size and DPI
-
-    # Plot lines with error bands
-    palette = sns.color_palette("deep", 3)
-    for i, effect_type in enumerate(["Naive", r"$ATE\ (Rewrite)$", r"$ATE\ (Rewrite^{2})$"]):
-        effect_data = df[df["Effect Type"] == effect_type]
-        sns.lineplot(
-            x="Correlation",
-            y="Effect Size",
-            data=effect_data,
-            label=effect_type,
-            color=palette[i],
-            linewidth=2.5,
-        )
-        plt.fill_between(
-            effect_data["Correlation"],
-            effect_data["Lower CI"],
-            effect_data["Upper CI"],
-            color=palette[i],
-            alpha=0.2,
-        )
-
-    plt.xlabel(
-        f"P({spurious_concept}|{target_concept})", fontsize=14, fontweight="bold"
-    )
-    plt.ylabel("Reward", fontsize=14, fontweight="bold")
-
-    dataset = effects_templates[0]["dataset_name"]
-    model_name = effects_templates[0]["score"]
-    plt.title(
-        f"Effect of {target_concept} on {model_name}\n(Data from {dataset})",
-        fontsize=16,
-        fontweight="bold",
-    )
-
-    plt.legend(title="", loc="upper left", fontsize=12, frameon=True)
-    plt.tick_params(axis="both", which="major", labelsize=12)
-
-    # Add grid lines
-    plt.grid(True, linestyle="--", alpha=0.7)
-
     plt.tight_layout()
     plt.show()
 
