@@ -171,10 +171,12 @@ These are the relevant fields in the yaml file. Make sure the ```model``` field 
 ```yaml
 scoring:
   model: "armorm" # Choices: "distilbert_positive", "distilbert_negative", "armorm", "sfairxc", "ncsoft"
-  dataset_folder: "rewrites" # Choices: "rewrites", "scored" (initially use "rewrites", then "scored" if you want to score additional reward models on this data)
+  dataset_folder: "rewrites" # Choices: "rewrites", "scored"
   dataset_filename: "imdb_length_template_20241028_142301_smoke_test.txt"
   dataset_name: "imdb_length" # Note: used in output filename so update to match the dataset_name below (INCLUDE CONCEPT)
 ```
+
+Note: when scoring a dataset for the first time, use ```dataset_folder: "rewrites"```. If you would like to score additional reward models on this same data, you will need to change to ```dataset_folder: "scored"``` in order to append to existing scored data. In either case, ```dataset_filename``` is the name of the file in said directory which should be scored.
 
 ### Scoring Templates
 
