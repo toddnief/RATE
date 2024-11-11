@@ -274,7 +274,17 @@ make treatment_effects
 
 ## Visualizing Results
 
-TODO
+We provide various plotting functions in ```utils_plotting.py```. You can see these functions called in ```results.ipynb```.
+
+To visualize your results, you will just need to modify ```results.ipynb``` to replace the arguments to the ```load_dataset_from_json``` calls.
+```python
+config = load_dataset_from_json(Path("config_plotting.jsonl"))
+```
+You will need to create your own ```.jsonl``` config files with your experiment templates. Here is the format:
+```json
+{"dataset_name": "IMDB", "concept": "Sentiment", "score": "FsfairX-LLaMA3-RM-v0.1", "reward_key": "sfairXC/FsfairX-LLaMA3-RM-v0.1", "dataset_filename": "imdb_sentiment_complete_scored_20240919_152739.jsonl"}
+{"dataset_name": "HelpSteer", "concept": "Complexity", "score": "ArmoRM", "reward_key": "RLHFlow/ArmoRM-Llama3-8B-v0.1", "dataset_filename": "helpsteer_complexity_complete_scored.jsonl"}
+```
 
 ## Synthetic Experiments
 
