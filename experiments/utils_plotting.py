@@ -294,9 +294,11 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
+    
     def prepare_plot_data(data_list, effects_templates):
         plot_data = []
         for data, template in zip(data_list, effects_templates):
+            data["ATE_naive_stderr"] = data.get("ATE_stderr_naive", 0)
             correlation = int(template['dataset_filename'].split('_')[-1].split('.')[0]) / 10
             for effect_type in ['naive_effect', 'ATE', 'ATE_naive']:
                 plot_data.append({
@@ -341,6 +343,18 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
         ax.legend(title='', loc='upper left', fontsize=12, frameon=True)
         ax.tick_params(axis='both', which='major', labelsize=12)
         ax.grid(True, linestyle='--', alpha=0.7)
+
+        # add slope of both "ATE" and "ATE Naive" put on right-hand side
+        for i, effect_type in enumerate(['ATE', 'ATE Naive']):
+            if effect_type == 'ATE Naive':
+                name = 'ATE (Single Rewrite)' 
+            elif effect_type == 'ATE':
+                name = r'ATE (Rewrite$^2$)'
+            effect_data = df[df['Effect Type'] == effect_type]
+            x = effect_data['Correlation']
+            y = effect_data['Effect Size']
+            slope, intercept = np.polyfit(x, y, 1)
+            print(f"Slope of {name}: {slope}")
 
     # Plot each subplot
     plot_subplot(ax1, df1, target_concept1, spurious_concept1, effects_templates1)
