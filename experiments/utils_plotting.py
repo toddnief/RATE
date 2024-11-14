@@ -298,43 +298,51 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
         plot_data = []
         for data, template in zip(data_list, effects_templates):
             correlation = int(template['dataset_filename'].split('_')[-1].split('.')[0]) / 10
-            for effect_type in ['naive_effect', 'ATE']:
+            for effect_type in ['naive_effect', 'ATE', 'ATE_naive']:
                 plot_data.append({
                     'Correlation': correlation,
-                    'Effect Type': 'Naive' if effect_type == 'naive_effect' else 'RATE',
+                    'Effect Type': 'Naive Effect' if effect_type == 'naive_effect' else 
+                                   'ATE' if effect_type == 'ATE' else 'ATE Naive',
                     'Effect Size': data[effect_type],
-                    'Lower CI': data[effect_type] - data[f'{effect_type}_stderr'] * 1.96,
-                    'Upper CI': data[effect_type] + data[f'{effect_type}_stderr'] * 1.96
+                    'Lower CI': data[effect_type] - data.get(f'{effect_type}_stderr', 0) * 1.96,
+                    'Upper CI': data[effect_type] + data.get(f'{effect_type}_stderr', 0) * 1.96
                 })
         return pd.DataFrame(plot_data)
 
+    # Prepare data for plotting
     df1 = prepare_plot_data(data_list1, effects_templates1)
     df2 = prepare_plot_data(data_list2, effects_templates2)
 
-    # Set up the plot style and size
+    # Set up plot style and dimensions
     sns.set_style("whitegrid")
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), dpi=300)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5), dpi=300)
 
     def plot_subplot(ax, df, target_concept, spurious_concept, effects_templates):
-        palette = sns.color_palette("deep", 2)
-        for i, effect_type in enumerate(['Naive', 'RATE']):
+        palette = sns.color_palette("deep", 3)  # Three colors for Naive Effect, ATE, ATE Naive
+        for i, effect_type in enumerate(['Naive Effect', 'ATE', 'ATE Naive']):
+            if effect_type == 'ATE Naive':
+                name = 'ATE (Single Rewrite)' 
+            elif effect_type == 'ATE':
+                name = r'ATE (Rewrite$^2$)'
+            else:
+                name = 'Naive Estimate'
             effect_data = df[df['Effect Type'] == effect_type]
             sns.lineplot(x='Correlation', y='Effect Size', data=effect_data, 
-                         label=effect_type, color=palette[i], linewidth=2.5, ax=ax)
+                         label=name, color=palette[i], linewidth=2.5, ax=ax)
             ax.fill_between(effect_data['Correlation'], effect_data['Lower CI'], effect_data['Upper CI'],
                             color=palette[i], alpha=0.2)
 
+        # Customize axes labels and title
         ax.set_xlabel(f'P({spurious_concept}|{target_concept})', fontsize=14, fontweight='bold')
         ax.set_ylabel('Reward', fontsize=14, fontweight='bold')
-
         dataset = effects_templates[0]['dataset_name']
         model_name = effects_templates[0]['score']
         ax.set_title(f"Effect of {target_concept} on {model_name}\n(Data from {dataset})", fontsize=16, fontweight='bold')
-
         ax.legend(title='', loc='upper left', fontsize=12, frameon=True)
         ax.tick_params(axis='both', which='major', labelsize=12)
         ax.grid(True, linestyle='--', alpha=0.7)
 
+    # Plot each subplot
     plot_subplot(ax1, df1, target_concept1, spurious_concept1, effects_templates1)
     plot_subplot(ax2, df2, target_concept2, spurious_concept2, effects_templates2)
 
