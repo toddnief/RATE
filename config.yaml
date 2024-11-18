@@ -1,0 +1,15 @@
+smoke_test: true
+rewrites:
+  dataset_name: "imdb_length" # This is used in a factory function to import the dataset template
+scoring:
+  model: "armorm" # Choices: "distilbert_positive", "distilbert_negative", "armorm", "sfairxc", "ncsoft"
+  dataset_folder: "rewrites" # Choices: "rewrites", "scored"
+  dataset_filename: "imdb_length_dataset_20241028_142301_smoke_test.json"
+  dataset_name: "imdb_length" # Note: used in output filename so update to match the dataset_name below (INCLUDE CONCEPT)
+effects:
+  dataset_name: "imdb_length" # Note: this is used to create the filename for the calculated effects
+  dataset_folder: null # null to load directly from the scored dataset_folder. Or, specifiy a subdirectory
+  concept: "length"
+  score: "armorm"
+  reward_key: "RLHFlow/ArmoRM-Llama3-8B-v0.1" # Note: This is the key for the reward in the dataset
+  dataset_filename: "imdb_length_armorm_smoke_test_scored_20241104_111220.jsonl"

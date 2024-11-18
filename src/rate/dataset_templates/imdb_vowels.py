@@ -11,7 +11,7 @@ def starts_with_vowel(text):
     return text[0] in set("aeiouAEIOU") if text else False
 
 
-def add_typos(text, min_typos=0, max_typos=7):
+def add_typos(text, min_typos=0, max_typos=10):
     """
     Introduces typos in the input text by swapping adjacent letters.
     The number of typos is chosen uniformly at random within the given range.
@@ -56,7 +56,7 @@ dataset = dataset.map(process_example, desc="Adding typos to dataset")
 
 dataset_template = {
     "dataset_name": "imdb_vowels",
-    "n_examples": 500,  # Note: The number of examples to rewrite
+    "n_examples": 2500,  # Note: The number of examples to rewrite
     "original_completions": dataset["train"],
     "w_strings": {
         "w=1": "starts with a vowel",

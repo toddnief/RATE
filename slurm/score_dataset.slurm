@@ -12,4 +12,4 @@
 # Note: This enables passing the config file as an argument to the script from the Makefile
 CONFIG_FILE=${CONFIG:-config.yaml}
 
-python experiments/score_dataset.py --config $CONFIG_FILE
+python src/rate/score_dataset.py --config $CONFIG_FILE

@@ -12,13 +12,14 @@ RESULTS_DIR = $(PROJECT_DIR)results/
 REWRITES_DIR = $(DATA_DIR)rewrites/
 PERMISSIONS = 664
 
-logs_dir = ${workdir}logs/
+work_dir = ./
+logs_dir = ${work_dir}logs/
 DATE := $(shell date +"%Y%m%d_%H%M%S")
 LOG_FILE_PREFIX = ${logs_dir}${DATE}
 output_file = ${LOG_FILE_PREFIX}_res.txt
 err_file = ${LOG_FILE_PREFIX}_err.txt
 
-workdir = ./src/rate/
+slurm_dir = ${work_dir}slurm/
 
 .PHONY: create_dataset
 create_dataset:
@@ -26,7 +27,7 @@ create_dataset:
 		--partition=$(PARTITION) \
 		--output="$(output_file)" \
 		--error="$(err_file)" \
-		$(workdir)create_dataset.slurm
+		$(slurm_dir)create_dataset.slurm
 
 # Usage: make score_dataset CONFIG=config.yaml
 .PHONY: score_dataset
@@ -36,7 +37,7 @@ score_dataset:
 		--output="$(output_file)" \
 		--error="$(err_file)" \
 		--export=ALL,CONFIG=$(CONFIG) \
-		$(workdir)score_dataset.slurm
+		$(slurm_dir)score_dataset.slurm
 
 .PHONY: treatment_effects
 treatment_effects:
@@ -44,4 +45,4 @@ treatment_effects:
 		--partition=$(PARTITION) \
 		--output="$(output_file)" \
 		--error="$(err_file)" \
-		$(workdir)treatment_effects.slurm
+		$(slurm_dir)treatment_effects.slurm
