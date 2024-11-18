@@ -18,7 +18,8 @@ logging.basicConfig(
 )
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-load_dotenv(SCRIPT_DIR.parent / ".env")
+ROOT_DIR = SCRIPT_DIR.parent.parent
+load_dotenv(ROOT_DIR / ".env")
 
 # Note: Make sure these are set in the .env file
 PROJECT_DIR = Path(os.getenv("PROJECT_DIR"))

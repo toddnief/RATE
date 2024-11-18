@@ -13,6 +13,7 @@ from constants import (
     FILE_ID,
     REWRITES_DATASET_NAME,
     REWRITES_DIR,
+    ROOT_DIR,
     load_config,
     logging,
 )
@@ -20,8 +21,6 @@ from dotenv import load_dotenv
 from gpt4_api import create_api_batch, submit_batch
 from openai import OpenAI
 from utils import serialize_experiment_template, write_to_json
-
-SCRIPT_DIR = Path(__file__).resolve().parent
 
 
 def write_batch_input(batch_input: List[Dict[str, Any]], filename: str) -> None:
@@ -92,14 +91,24 @@ def create_dataset(
     get_reward_question = dataset_template["get_reward_question"]
     w_classifier = dataset_template["w_classifier"]
     n_examples = dataset_template["n_examples"]
+    SMOKE_TEST = dataset_template.get("SMOKE_TEST", False)
 
+    w_1_examples = 0
     dataset = {}
     for i, example in enumerate(original_completions):
         original_completion = get_original_completion(example)
         w_original = w_classifier(example)
 
+        if w_original:
+            w_1_examples += 1
+
         # Note: Skip unclassified examples
         if w_original is None:
+            continue
+
+        # Note: Make sure smoke test has distribution of positive and negative examples
+        # Skip positive examples to make sure we have at least 3 negative examples
+        if SMOKE_TEST and w_1_examples > n_examples - 3 and w_original:
             continue
 
         # Create dataset entry
@@ -161,12 +170,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config",
         type=str,
-        default="config.yaml",  # Default to config.yaml in SCRIPT_DIR if not provided
+        default="config.yaml",  # Default to config.yaml in project root if not provided
         help="Path to the config file",
     )
     args = parser.parse_args()
 
-    yaml_path = SCRIPT_DIR / args.config
+    yaml_path = ROOT_DIR / args.config
 
     # Note: Lazy loads config constants
     load_config(yaml_path)

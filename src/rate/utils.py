@@ -9,6 +9,8 @@ from constants import GROUP_NAME, SCORED_DIR
 
 
 def set_group_and_permissions(save_path, group_name=GROUP_NAME):
+    if group_name is None:
+        return
     gid = grp.getgrnam(group_name).gr_gid
     os.chown(save_path, os.getuid(), gid)
     os.chmod(save_path, stat.S_IRUSR | stat.S_IRGRP)

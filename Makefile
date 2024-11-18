@@ -18,7 +18,7 @@ LOG_FILE_PREFIX = ${logs_dir}${DATE}
 output_file = ${LOG_FILE_PREFIX}_res.txt
 err_file = ${LOG_FILE_PREFIX}_err.txt
 
-workdir = ./
+workdir = ./src/rate/
 
 .PHONY: create_dataset
 create_dataset:

@@ -1,7 +1,7 @@
 """Functions for calculating treatment effects from a scored dataset."""
 
+import argparse
 import pprint
-from pathlib import Path
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -11,12 +11,11 @@ from constants import (  # noqa
     FILE_ID,
     REWRITES_DATASET_NAME,
     REWRITES_DIR,
+    ROOT_DIR,
     SCORED_DIR,
     logging,
 )
 from utils import load_dataset_from_json, write_to_json
-
-SCRIPT_DIR = Path(__file__).resolve().parent
 
 
 def calculate_unpaired_treatment_effect(
@@ -89,7 +88,7 @@ def calculate_rewrite_effect(
 
 
 def calculate_average_treatment_effects(
-    dataset: Dict[str, Any], **effects_template
+    dataset: Dict[str, Any], w_original_key, w_counterfactual_key, **effects_template
 ) -> Dict[str, float]:
     """
     Calculate the average treatment effects (ATE, ATT, ATU) and their standard errors.
@@ -113,11 +112,7 @@ def calculate_average_treatment_effects(
     Returns:
         A dictionary containing treatment effects and standard errors
     """
-    # TODO: This is confusing and should be cleaned up
-    # The default should actually be between the rewritten rewrite and the rewrite
     reward_key = effects_template.get("reward_key", "reward")
-    original = effects_template.get("original", "rewritten rewrite")
-    rewrite = effects_template.get("rewrite", "rewrite")
 
     do_w_1 = []
     do_w_0 = []
@@ -130,22 +125,24 @@ def calculate_average_treatment_effects(
 
     for example in dataset.values():
         if example["w_original"]:
-            do_w_1.append(example[reward_key][original])
-            do_w_0.append(example[reward_key][rewrite])
+            do_w_1.append(example[reward_key][w_original_key])
+            do_w_0.append(example[reward_key][w_counterfactual_key])
 
-            w_1.append(example[reward_key][original])
-            w_0_for_w_1.append(example[reward_key][rewrite])
+            w_1.append(example[reward_key][w_original_key])
+            w_0_for_w_1.append(example[reward_key][w_counterfactual_key])
             ate_effects.append(
-                example[reward_key][original] - example[reward_key][rewrite]
+                example[reward_key][w_original_key]
+                - example[reward_key][w_counterfactual_key]
             )
         else:
-            do_w_1.append(example[reward_key][rewrite])
-            do_w_0.append(example[reward_key][original])
+            do_w_1.append(example[reward_key][w_counterfactual_key])
+            do_w_0.append(example[reward_key][w_original_key])
 
-            w_0.append(example[reward_key][original])
-            w_1_for_w_0.append(example[reward_key][rewrite])
+            w_0.append(example[reward_key][w_original_key])
+            w_1_for_w_0.append(example[reward_key][w_counterfactual_key])
             ate_effects.append(
-                example[reward_key][rewrite] - example[reward_key][original]
+                example[reward_key][w_counterfactual_key]
+                - example[reward_key][w_original_key]
             )
 
     do_w_1, do_w_0 = np.asarray(do_w_1), np.asarray(do_w_0)
@@ -171,6 +168,7 @@ def calculate_average_treatment_effects(
         "naive_effect_stderr": naive_effect_stderr,
     }
 
+
 def calculate_treatment_effects(
     dataset: Dict[str, Any], **effects_template
 ) -> Dict[str, float]:
@@ -185,8 +183,9 @@ def calculate_treatment_effects(
     Returns:
         A dictionary containing treatment effects and standard errors
     """
-    original = effects_template.get("original", "rewritten rewrite")
-    rewrite = effects_template.get("rewrite", "rewrite")
+    rewritten_rewrites = effects_template.get("rewritten_rewrites", True)
+    w_original_key = "rewritten rewrite" if rewritten_rewrites else "original"
+    w_counterfactual_key = "rewrite"
 
     Y1_count = 0
     Y1_rewards = []
@@ -194,9 +193,11 @@ def calculate_treatment_effects(
     for example in dataset.values():
         if example["w_original"]:
             Y1_count += 1
-            Y1_rewards.append(example[effects_template["reward_key"]][original])
+            Y1_rewards.append(example[effects_template["reward_key"]][w_original_key])
         else:
-            Y0_rewards.append(example[effects_template["reward_key"]][rewrite])
+            Y0_rewards.append(
+                example[effects_template["reward_key"]][w_counterfactual_key]
+            )
 
     Y0_count = len(dataset) - Y1_count
 
@@ -211,11 +212,14 @@ def calculate_treatment_effects(
     logging.info(f"Number of w=1 examples: {Y1_count}")
     logging.info(f"Number of w=0 examples: {Y0_count}")
 
-    treatment_effects = calculate_average_treatment_effects(dataset, **effects_template)
+    # TODO: Counting the Y1, Y0 examples above and calculating treatment effects separately is kind of confusing
+    treatment_effects = calculate_average_treatment_effects(
+        dataset, w_original_key, w_counterfactual_key, **effects_template
+    )
     effects_template_naive = effects_template.copy()
     effects_template_naive["original"] = "original"
     treatment_effects_naive = calculate_average_treatment_effects(
-        dataset, **effects_template_naive
+        dataset, "original", **effects_template_naive
     )
 
     for key, value in treatment_effects_naive.items():
@@ -238,7 +242,18 @@ def calculate_treatment_effects(
 
 
 if __name__ == "__main__":
-    with open(SCRIPT_DIR / "config.yaml", "r") as f:
+    # Note: Use argparse to allow submission of config file via slurm
+    parser = argparse.ArgumentParser(description="Scoring script")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="config.yaml",  # Default to config.yaml in ROOT_DIR if not provided
+        help="Path to the config file",
+    )
+    args = parser.parse_args()
+
+    yaml_path = ROOT_DIR / args.config
+    with open(yaml_path, "r") as f:
         config = yaml.safe_load(f)
     effects_template = config["effects"]
 
@@ -254,7 +269,11 @@ if __name__ == "__main__":
 
     dataset_filename = effects_template["dataset_filename"]
     dataset_folder = effects_template["dataset_folder"]
-    dataset_path = SCORED_DIR / dataset_folder / dataset_filename if dataset_folder is not None else SCORED_DIR / dataset_filename
+    dataset_path = (
+        SCORED_DIR / dataset_folder / dataset_filename
+        if dataset_folder is not None
+        else SCORED_DIR / dataset_filename
+    )
     logging.info(f"Loading dataset from: {dataset_path}")
     dataset = load_dataset_from_json(dataset_path)
 

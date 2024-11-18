@@ -2,7 +2,6 @@
 
 import argparse
 import json
-from pathlib import Path
 
 import torch
 import yaml
@@ -10,6 +9,7 @@ from constants import (
     DEVICE,
     FILE_ID,
     REWRITES_DIR,
+    ROOT_DIR,
     SCORED_DIR,
     load_config,
     logging,
@@ -22,8 +22,6 @@ from utils import (
     set_group_and_permissions,
     write_to_json,
 )
-
-SCRIPT_DIR = Path(__file__).resolve().parent
 
 
 def _score_example(
@@ -95,12 +93,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config",
         type=str,
-        default="config.yaml",  # Default to config.yaml in SCRIPT_DIR if not provided
+        default="config.yaml",  # Default to config.yaml in ROOT_DIR if not provided
         help="Path to the config file",
     )
     args = parser.parse_args()
 
-    yaml_path = SCRIPT_DIR / args.config
+    yaml_path = ROOT_DIR / args.config
 
     # Note: Lazy loads config constants
     load_config(yaml_path)
