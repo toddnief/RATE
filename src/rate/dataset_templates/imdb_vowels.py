@@ -10,39 +10,41 @@ dataset = load_dataset("imdb")
 def starts_with_vowel(text):
     return text[0] in set("aeiouAEIOU") if text else False
 
-
-def add_typos(text, min_typos=0, max_typos=10):
+TYPO_PERCENTAGE = 10
+def add_typos(text, typo_percentage=TYPO_PERCENTAGE):
     """
-    Introduces typos in the input text by swapping adjacent letters.
-    The number of typos is chosen uniformly at random within the given range.
+    Introduces typos in a percentage of words by swapping adjacent letters.
+    The percentage of words affected is given by typo_percentage.
 
     Args:
         text (str): The input text where typos will be added.
-        min_typos (int): Minimum number of typos to introduce.
-        max_typos (int): Maximum number of typos to introduce.
+        typo_percentage (int): Percentage of words to introduce typos to (default 10%).
 
     Returns:
         str: The modified text with typos.
     """
-    # Choose a random number of typos within the range
-    num_typos = random.randint(min_typos, max_typos)
+    words = text.split()  # Split the text into words
+    num_words = len(words)
+    num_typos = int(num_words * typo_percentage / 100)  # Calculate number of words to affect
+    print(f"Adding typos to {num_typos} words")
 
-    text_as_list = list(text)  # Convert the text to a mutable list
-    for _ in range(num_typos):
-        # Find a random position to introduce a typo
-        typo_index = random.randint(
-            0, len(text_as_list) - 2
-        )  # Ensure room to swap with the next character
-        if (
-            text_as_list[typo_index].isalpha()
-            and text_as_list[typo_index + 1].isalpha()
-        ):
-            # Swap the current character with the next one
-            text_as_list[typo_index], text_as_list[typo_index + 1] = (
-                text_as_list[typo_index + 1],
-                text_as_list[typo_index],
-            )
-    return "".join(text_as_list)
+    # Randomly select words to introduce typos
+    words_to_typo = random.sample(range(num_words), num_typos)
+
+    for idx in words_to_typo:
+        word = words[idx]
+        if len(word) > 2:  # Only add typos to words with more than two characters
+            typo_index = random.randint(0, len(word) - 2)  # Select random index to swap
+            if word[typo_index].isalpha() and word[typo_index + 1].isalpha():
+                # Swap adjacent characters
+                word_as_list = list(word)
+                word_as_list[typo_index], word_as_list[typo_index + 1] = (
+                    word_as_list[typo_index + 1],
+                    word_as_list[typo_index],
+                )
+                words[idx] = "".join(word_as_list)
+
+    return " ".join(words)
 
 
 # Introduce typos to examples that start with a vowel
@@ -55,7 +57,7 @@ def process_example(example):
 dataset = dataset.map(process_example, desc="Adding typos to dataset")
 
 dataset_template = {
-    "dataset_name": "imdb_vowels",
+    "dataset_name": f"imdb_vowels_{TYPO_PERCENTAGE}typos",
     "n_examples": 2500,  # Note: The number of examples to rewrite
     "original_completions": dataset["train"],
     "w_strings": {
