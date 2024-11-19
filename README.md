@@ -21,10 +21,12 @@ Next, activate the environment:
 conda activate rate
 ```
 and setup the package:
-```pip install -e .
+```bash
+pip install -e .
 ```
 Lastly, if you plan on using the Make commands below, deactivate the environment (since the Make command will manage the env for you).
-```conda deactivate
+```bash
+conda deactivate
 ```
 
 ### .env File
