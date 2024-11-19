@@ -18,9 +18,11 @@ dependencies:
   - pip:
       - python-dotenv
       - accelerate== 0.30.1
+      - bitsandbytes==0.44.1
       - datasets==2.19.1
       - matplotlib
       - tqdm
       - transformers==4.40.2
       - pytest
       - openai==1.51.2
+      - -e .  # Add current directory as an editable package

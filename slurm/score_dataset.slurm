@@ -1,7 +1,6 @@
 #!/usr/bin/bash
 #SBATCH --job-name=score_dataset
 #SBATCH	--gres=gpu:1
-#SBATCH --exclusive
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH	--mem=64GB

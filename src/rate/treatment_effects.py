@@ -219,7 +219,7 @@ def calculate_treatment_effects(
     effects_template_naive = effects_template.copy()
     effects_template_naive["original"] = "original"
     treatment_effects_naive = calculate_average_treatment_effects(
-        dataset, "original", **effects_template_naive
+        dataset, "original", w_counterfactual_key, **effects_template_naive
     )
 
     for key, value in treatment_effects_naive.items():
