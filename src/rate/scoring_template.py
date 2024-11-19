@@ -3,10 +3,6 @@
 import importlib
 from typing import Any, Dict
 
-# TODO: Actually create a package — this is a hack to get the import working
-# SCRIPT_DIR = Path(__file__).resolve().parent
-# sys.path.append(str(SCRIPT_DIR))
-
 
 def load_scoring_utils(scoring_model: str) -> Dict[str, Any]:
     """

@@ -191,14 +191,7 @@ def calculate_treatment_effects(
     Returns:
         A dictionary containing treatment effects and standard errors
     """
-    # rewritten_rewrites = effects_template.get("rewritten_rewrites", True)
-    # w_original_key = "rewritten rewrite" if rewritten_rewrites else "original"
-    # w_counterfactual_key = "rewrite"
     w_original_key = effects_template.get("w_original_key", "original")
-    w_counterfactual_key = effects_template.get("w_counterfactual_key", "rewrite")
-    w_rewritten_rewrite_key = effects_template.get(
-        "w_rewritten_rewrite_key", "rewritten rewrite"
-    )
 
     Y1_count = 0
     Y1_rewards = []
@@ -229,18 +222,14 @@ def calculate_treatment_effects(
     treatment_effects = calculate_average_treatment_effects(
         dataset,
         rewritten_rewrites=True,
-        # w_original_key=w_rewritten_rewrite_key,
-        # w_counterfactual_key=w_counterfactual_key,
         **effects_template,
     )
 
-    effects_template_naive = effects_template.copy()
+    # Calculate effect size with only one rewrite
     treatment_effects_naive = calculate_average_treatment_effects(
         dataset,
         rewritten_rewrites=False,
-        # w_original_key=w_original_key,
-        # w_counterfactual_key=w_counterfactual_key,
-        **effects_template_naive,
+        **effects_template,
     )
 
     for key, value in treatment_effects_naive.items():
