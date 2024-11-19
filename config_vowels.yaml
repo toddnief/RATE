@@ -1,0 +1,19 @@
+smoke_test: false
+rewrites:
+  dataset_name: "imdb_vowels" # This is used in a factory function to import the dataset template
+scoring:
+  model: "armorm" # Choices: "distilbert_positive", "distilbert_negative", "armorm", "sfairxc", "ncsoft"
+  dataset_folder: "rewrites" # Choices: "rewrites", "scored"
+  dataset_filename: "imdb_vowels_dataset_20241118_123149.json"
+  dataset_name: "imdb_vowels" # Note: used in output filename so update to match the dataset_name below (INCLUDE CONCEPT)
+effects:
+  dataset_name: "imdb_vowels" # Note: this is used to create the filename for the calculated effects
+  dataset_folder: null # null to load directly from the scored dataset_folder. Or, specifiy a subdirectory
+  concept: "vowels"
+  score: "armorm"
+  w_original_key: "original"
+  w_counterfactual_key: "rewrite"
+  w_rewritten_rewrite_key: "rewritten rewrite"
+  # rewritten_rewrites: true
+  reward_key: "RLHFlow/ArmoRM-Llama3-8B-v0.1" # Note: This is the key for the reward in the dataset
+  dataset_filename: "imdb_vowels_armorm_scored_20241118_191156.jsonl"

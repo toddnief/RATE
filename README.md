@@ -42,7 +42,7 @@ PARTITION=general
 Here is the expected file structure for the experiments (note that these directories will be created automatically in the project directory specified in the ```.env``` file):
 ```
 project_dir/
-├── data/                     # Data directory specified in .env
+├── data/                      # Data directory specified in .env
 │  ├── batch_api/              # API artifacts stored here
 │  ├── rewrites/               # Rewritten datasets stored here
 │  ├── scored/                 # Scored datasets stored here
