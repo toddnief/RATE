@@ -88,7 +88,7 @@ def calculate_rewrite_effect(
 
 
 def calculate_average_treatment_effects(
-    dataset: Dict[str, Any], w_original_key, w_counterfactual_key, **effects_template
+    dataset: Dict[str, Any], rewritten_rewrites: bool = True, **effects_template
 ) -> Dict[str, float]:
     """
     Calculate the average treatment effects (ATE, ATT, ATU) and their standard errors.
@@ -113,6 +113,14 @@ def calculate_average_treatment_effects(
         A dictionary containing treatment effects and standard errors
     """
     reward_key = effects_template.get("reward_key", "reward")
+
+    if rewritten_rewrites:
+        w_original_key = effects_template.get(
+            "w_rewritten_rewrite_key", "rewritten rewrite"
+        )
+    else:
+        w_original_key = effects_template.get("w_original_key", "original")
+    w_counterfactual_key = effects_template.get("w_counterfactual_key", "rewrite")
 
     do_w_1 = []
     do_w_0 = []
@@ -183,9 +191,14 @@ def calculate_treatment_effects(
     Returns:
         A dictionary containing treatment effects and standard errors
     """
-    rewritten_rewrites = effects_template.get("rewritten_rewrites", True)
-    w_original_key = "rewritten rewrite" if rewritten_rewrites else "original"
-    w_counterfactual_key = "rewrite"
+    # rewritten_rewrites = effects_template.get("rewritten_rewrites", True)
+    # w_original_key = "rewritten rewrite" if rewritten_rewrites else "original"
+    # w_counterfactual_key = "rewrite"
+    w_original_key = effects_template.get("w_original_key", "original")
+    w_counterfactual_key = effects_template.get("w_counterfactual_key", "rewrite")
+    w_rewritten_rewrite_key = effects_template.get(
+        "w_rewritten_rewrite_key", "rewritten rewrite"
+    )
 
     Y1_count = 0
     Y1_rewards = []
@@ -195,9 +208,7 @@ def calculate_treatment_effects(
             Y1_count += 1
             Y1_rewards.append(example[effects_template["reward_key"]][w_original_key])
         else:
-            Y0_rewards.append(
-                example[effects_template["reward_key"]][w_counterfactual_key]
-            )
+            Y0_rewards.append(example[effects_template["reward_key"]][w_original_key])
 
     Y0_count = len(dataset) - Y1_count
 
@@ -213,17 +224,27 @@ def calculate_treatment_effects(
     logging.info(f"Number of w=0 examples: {Y0_count}")
 
     # TODO: Counting the Y1, Y0 examples above and calculating treatment effects separately is kind of confusing
+
+    # Calculate effect size with rewritten rewrites
     treatment_effects = calculate_average_treatment_effects(
-        dataset, w_original_key, w_counterfactual_key, **effects_template
+        dataset,
+        rewritten_rewrites=True,
+        # w_original_key=w_rewritten_rewrite_key,
+        # w_counterfactual_key=w_counterfactual_key,
+        **effects_template,
     )
+
     effects_template_naive = effects_template.copy()
-    effects_template_naive["original"] = "original"
     treatment_effects_naive = calculate_average_treatment_effects(
-        dataset, "original", w_counterfactual_key, **effects_template_naive
+        dataset,
+        rewritten_rewrites=False,
+        # w_original_key=w_original_key,
+        # w_counterfactual_key=w_counterfactual_key,
+        **effects_template_naive,
     )
 
     for key, value in treatment_effects_naive.items():
-        treatment_effects[f"{key}_naive"] = value
+        treatment_effects[f"{key}_single_rewrite"] = value
 
     pp = pprint.PrettyPrinter(indent=4)
     logging.info(f"Treatment effects: {pp.pformat(treatment_effects)}")

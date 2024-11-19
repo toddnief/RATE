@@ -1,13 +1,11 @@
 """Scoring template factory function to load scoring utilities based on scoring model in config"""
 
 import importlib
-import sys
-from pathlib import Path
 from typing import Any, Dict
 
 # TODO: Actually create a package — this is a hack to get the import working
-SCRIPT_DIR = Path(__file__).resolve().parent
-sys.path.append(str(SCRIPT_DIR))
+# SCRIPT_DIR = Path(__file__).resolve().parent
+# sys.path.append(str(SCRIPT_DIR))
 
 
 def load_scoring_utils(scoring_model: str) -> Dict[str, Any]:
@@ -29,7 +27,7 @@ def load_scoring_utils(scoring_model: str) -> Dict[str, Any]:
     Raises:
         ValueError: If the specified scoring model cannot be found or imported.
     """
-    module_name = f"scoring_templates.{scoring_model.lower()}"
+    module_name = f"rate.scoring_templates.{scoring_model.lower()}"
 
     try:
         module = importlib.import_module(module_name)
