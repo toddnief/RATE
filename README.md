@@ -11,14 +11,20 @@ TODO: Summary of the paper and experiments
 
 ### Conda Environment
 
-First, install the conda environment located in the root of the directory:
+First, install the conda environment located in the root of the directory.
 ```bash
 conda env create -f environment.yaml
 ```
 
-If you plan to run the scripts directly, activate the environment (If you plan to use the Make commands, the Make command will manage the environment for you):
+Next, activate the environment:
 ```bash
 conda activate rate
+```
+and setup the package:
+```pip install -e .
+```
+Lastly, if you plan on using the Make commands below, deactivate the environment (since the Make command will manage the env for you).
+```conda deactivate
 ```
 
 ### .env File
