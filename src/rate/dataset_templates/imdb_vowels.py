@@ -10,7 +10,7 @@ dataset = load_dataset("imdb")
 def starts_with_vowel(text):
     return text[0] in set("aeiouAEIOU") if text else False
 
-TYPO_PERCENTAGE = 0
+TYPO_PERCENTAGE = 30
 def add_typos(text, typo_percentage=TYPO_PERCENTAGE):
     """
     Introduces typos in a percentage of words by swapping adjacent letters.
