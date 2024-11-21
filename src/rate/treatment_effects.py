@@ -64,7 +64,7 @@ def calculate_rewrite_effect(
     }
 
 
-def _calculate_treatment_effects(treated, untreated, paired=False):
+def calculate_treatment_effects(treated, untreated, paired=False):
     """
     Calculates the treatment effect and standard error for unpaired data.
 
@@ -182,30 +182,29 @@ def treatment_effects_pipeline(
     logging.info(f"Number of w=0 examples: {Y0_count}")
 
     # Naive effects
-    naive_effect, naive_effect_stderr = _calculate_treatment_effects(
+    naive_effect, naive_effect_stderr = calculate_treatment_effects(
         Y1_rewards, Y0_rewards
     )
 
     # Single rewrite effects
-    ATE_single_rewrite, ATE_single_rewrite_stderr = _calculate_treatment_effects(
+    ATE_single_rewrite, ATE_single_rewrite_stderr = calculate_treatment_effects(
         Y_do1_rewards, Y_do0_rewards, paired=True
     )
-    # TODO: double check this
-    ATT_single_rewrite, ATT_single_rewrite_stderr = _calculate_treatment_effects(
+    ATT_single_rewrite, ATT_single_rewrite_stderr = calculate_treatment_effects(
         Y1_rewards, Y0_rewritten_rewards, paired=True
     )
-    ATU_single_rewrite, ATU_single_rewrite_stderr = _calculate_treatment_effects(
+    ATU_single_rewrite, ATU_single_rewrite_stderr = calculate_treatment_effects(
         Y1_rewritten_rewards, Y0_rewards, paired=True
     )
 
     # Rewritten rewrite effects
-    ATE_rewritten_rewrite, ATE_rewritten_rewrite_stderr = _calculate_treatment_effects(
+    ATE_rewritten_rewrite, ATE_rewritten_rewrite_stderr = calculate_treatment_effects(
         Y_do1_rewritten_rewrite_rewards, Y_do0_rewritten_rewrite_rewards
     )
-    ATT_rewritten_rewrite, ATT_rewritten_rewrite_stderr = _calculate_treatment_effects(
+    ATT_rewritten_rewrite, ATT_rewritten_rewrite_stderr = calculate_treatment_effects(
         Y1_rewritten_rewrite_rewards, Y0_rewritten_rewards
     )
-    ATU_rewritten_rewrite, ATU_rewritten_rewrite_stderr = _calculate_treatment_effects(
+    ATU_rewritten_rewrite, ATU_rewritten_rewrite_stderr = calculate_treatment_effects(
         Y1_rewritten_rewards, Y0_rewritten_rewrite_rewards
     )
 
