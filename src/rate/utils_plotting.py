@@ -363,52 +363,72 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
     plt.tight_layout()
     plt.show()
 
-def synthetic(data_list, effects_templates, target_concept, spurious_concept):
+def synthetic_plot(data_list, effects_template, target_concept, spurious_concept, x_lab: str):
     sns.set_theme(style="whitegrid", font="serif")
     plt.rcParams['font.size'] = 14
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
-    plot_data = []
-    for data, template in zip(data_list, effects_templates):
-        correlation = int(template['dataset_filename'].split('_')[-1].split('.')[0]) / 10
-        for effect_type in ['naive_effect', 'ATE']:
-            plot_data.append({
-                'Correlation': correlation,
-                'Effect Type': 'Naive' if effect_type == 'naive_effect' else 'RATE',
-                'Effect Size': data[effect_type],
-                'Lower CI': data[effect_type] - data[f'{effect_type}_stderr'] * 1.96,
-                'Upper CI': data[effect_type] + data[f'{effect_type}_stderr'] * 1.96
-            })
+    def prepare_plot_data(data_list, effects_template):
+        plot_data = []
+        for data, template in zip(data_list, effects_template):
+            x_val = int(template['dataset_filename'].split('_')[-1].split('.')[0])
+            for effect_type in ['naive_effect', 'ATE_rewritten_rewrite', 'ATE_single_rewrite']:
+                plot_data.append({
+                     x_lab : x_val,
+                    'Effect Type': 'Naive Effect' if effect_type == 'naive_effect' else 
+                                   'ATE' if effect_type == 'ATE' else 'ATE Naive',
+                    'Effect Size': data[effect_type],
+                    'Lower CI': data[effect_type] - data.get(f'{effect_type}_stderr', 0) * 1.96,
+                    'Upper CI': data[effect_type] + data.get(f'{effect_type}_stderr', 0) * 1.96
+                })
+        return pd.DataFrame(plot_data)
 
-    df = pd.DataFrame(plot_data)
+    # Prepare data for plotting
+    df = prepare_plot_data(data_list, effects_template)
 
-    # Set up the plot style and size (standardized)
+    # Set up plot style and dimensions
     sns.set_style("whitegrid")
-    plt.figure(figsize=(12, 4), dpi=300)  # Standardized size and DPI
-    
-    # Plot lines with error bands
-    palette = sns.color_palette("deep", 2)
-    for i, effect_type in enumerate(['Naive', 'RATE']):
+    plt.figure(figsize=(8, 6), dpi=300)
+    ax = plt.gca()
+
+    # Plot the data
+    palette = sns.color_palette("deep", 3)  # Three colors for Naive Effect, ATE, ATE Naive
+    for i, effect_type in enumerate(['Naive Effect', 'ATE', 'ATE Naive']):
+        if effect_type == 'ATE Naive':
+            name = 'ATE (Single Rewrite)' 
+        elif effect_type == 'ATE':
+            name = r'ATE (Rewrite$^2$)'
+        else:
+            name = 'Naive Estimate'
         effect_data = df[df['Effect Type'] == effect_type]
-        sns.lineplot(x='Correlation', y='Effect Size', data=effect_data, 
-                     label=effect_type, color=palette[i], linewidth=2.5)
-        plt.fill_between(effect_data['Correlation'], effect_data['Lower CI'], effect_data['Upper CI'],
-                         color=palette[i], alpha=0.2)
+        sns.lineplot(x=x_lab, y='Effect Size', data=effect_data, 
+                     label=name, color=palette[i], linewidth=2.5, ax=ax)
+        ax.fill_between(effect_data[x_lab], effect_data['Lower CI'], effect_data['Upper CI'],
+                        color=palette[i], alpha=0.2)
 
-    plt.xlabel(f'P({spurious_concept}|{target_concept})', fontsize=14, fontweight='bold')
-    plt.ylabel('Reward', fontsize=14, fontweight='bold')
+    # Customize axes labels and title
+    ax.set_xlabel(f'P({spurious_concept}|{target_concept})', fontsize=14, fontweight='bold')
+    ax.set_ylabel('Reward', fontsize=14, fontweight='bold')
+    dataset = effects_template[0]['dataset_name']
+    model_name = effects_template[0]['score']
+    ax.set_title(f"Effect of {target_concept} on {model_name}\n(Data from {dataset})", fontsize=16, fontweight='bold')
+    ax.legend(title='', loc='upper left', fontsize=12, frameon=True)
+    ax.tick_params(axis='both', which='major', labelsize=12)
+    ax.grid(True, linestyle='--', alpha=0.7)
 
-    dataset = effects_templates[0]['dataset_name']
-    model_name = effects_templates[0]['score']
-    plt.title(f"Effect of {target_concept} on {model_name}\n(Data from {dataset})", fontsize=16, fontweight='bold')
+    # Add slope of "ATE" and "ATE Naive" on the right-hand side
+    for i, effect_type in enumerate(['ATE', 'ATE Naive']):
+        if effect_type == 'ATE Naive':
+            name = 'ATE (Single Rewrite)' 
+        elif effect_type == 'ATE':
+            name = r'ATE (Rewrite$^2$)'
+        effect_data = df[df['Effect Type'] == effect_type]
+        x = effect_data[x_lab]
+        y = effect_data['Effect Size']
+        slope, intercept = np.polyfit(x, y, 1)
+        print(f"Slope of {name}: {slope}")
 
-    plt.legend(title='', loc='upper left', fontsize=12, frameon=True)
-    plt.tick_params(axis='both', which='major', labelsize=12)
-    
-    # Add grid lines
-    plt.grid(True, linestyle='--', alpha=0.7)
-    
     plt.tight_layout()
     plt.show()
 
