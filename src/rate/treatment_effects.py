@@ -6,14 +6,14 @@ from typing import Any, Dict
 
 import numpy as np
 import yaml
-from constants import (
+from rate.constants import (
     EFFECTS_DIR,
     FILE_ID,
     ROOT_DIR,
     SCORED_DIR,
     logging,
 )
-from utils import load_dataset_from_json, write_to_json
+from rate.utils import load_dataset_from_json, write_to_json
 
 
 def calculate_rewrite_effect(

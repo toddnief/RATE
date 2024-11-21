@@ -9,8 +9,8 @@ import numpy as np
 import seaborn as sns
 from collections import defaultdict
 from pathlib import Path
-from utils import load_dataset_from_json, write_to_json
-from treatment_effects import calculate_treatment_effects
+from rate.utils import load_dataset_from_json, write_to_json
+from rate.treatment_effects import calculate_treatment_effects
 import pandas as pd
 
 def create_latex_tables_from_samples(file_paths, num_samples=10, max_text_length=100):
@@ -363,29 +363,39 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
     plt.tight_layout()
     plt.show()
 
-def synthetic_plot(data_list, effects_template, target_concept, spurious_concept, x_lab: str):
+def synthetic_plot(data_list, templates, target_concept, spurious_concept, x_lab: str):
     sns.set_theme(style="whitegrid", font="serif")
     plt.rcParams['font.size'] = 14
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
-    def prepare_plot_data(data_list, effects_template):
+    def prepare_plot_data(data_list, templates):
         plot_data = []
-        for data, template in zip(data_list, effects_template):
-            x_val = int(template['dataset_filename'].split('_')[-1].split('.')[0])
-            for effect_type in ['naive_effect', 'ATE_rewritten_rewrite', 'ATE_single_rewrite']:
-                plot_data.append({
-                     x_lab : x_val,
-                    'Effect Type': 'Naive Effect' if effect_type == 'naive_effect' else 
-                                   'ATE' if effect_type == 'ATE' else 'ATE Naive',
-                    'Effect Size': data[effect_type],
-                    'Lower CI': data[effect_type] - data.get(f'{effect_type}_stderr', 0) * 1.96,
-                    'Upper CI': data[effect_type] + data.get(f'{effect_type}_stderr', 0) * 1.96
-                })
+        for data, template in zip(data_list, templates):
+            # Extract the number of typos from the filename
+            x_val = int(template['dataset_filename'].split('_typos_')[1].split('.')[0])
+            
+            # Map the effect types to their display names
+            effect_mapping = {
+                'naive_effect': 'Naive Effect',
+                'ATE_rewritten_rewrite': 'ATE',
+                'ATE_single_rewrite': 'ATE Naive'
+            }
+            
+            for effect_type, display_name in effect_mapping.items():
+                if effect_type in data:  # Check if the effect type exists in the data
+                    plot_data.append({
+                        x_lab: x_val,
+                        'Effect Type': display_name,
+                        'Effect Size': float(data[effect_type]),  # Ensure numeric value
+                        'Lower CI': float(data[effect_type]) - float(data.get(f'{effect_type}_stderr', 0)) * 1.96,
+                        'Upper CI': float(data[effect_type]) + float(data.get(f'{effect_type}_stderr', 0)) * 1.96
+                    })
+        
         return pd.DataFrame(plot_data)
 
     # Prepare data for plotting
-    df = prepare_plot_data(data_list, effects_template)
+    df = prepare_plot_data(data_list, templates)
 
     # Set up plot style and dimensions
     sns.set_style("whitegrid")
@@ -393,41 +403,42 @@ def synthetic_plot(data_list, effects_template, target_concept, spurious_concept
     ax = plt.gca()
 
     # Plot the data
-    palette = sns.color_palette("deep", 3)  # Three colors for Naive Effect, ATE, ATE Naive
-    for i, effect_type in enumerate(['Naive Effect', 'ATE', 'ATE Naive']):
-        if effect_type == 'ATE Naive':
-            name = 'ATE (Single Rewrite)' 
-        elif effect_type == 'ATE':
-            name = r'ATE (Rewrite$^2$)'
-        else:
-            name = 'Naive Estimate'
+    palette = sns.color_palette("deep", 3)
+    effect_type_mapping = {
+        'Naive Effect': 'Naive Estimate',
+        'ATE': r'ATE (Rewrite$^2$)',
+        'ATE Naive': 'ATE (Single Rewrite)'
+    }
+
+    for i, effect_type in enumerate(effect_type_mapping.keys()):
         effect_data = df[df['Effect Type'] == effect_type]
-        sns.lineplot(x=x_lab, y='Effect Size', data=effect_data, 
-                     label=name, color=palette[i], linewidth=2.5, ax=ax)
-        ax.fill_between(effect_data[x_lab], effect_data['Lower CI'], effect_data['Upper CI'],
-                        color=palette[i], alpha=0.2)
+        if not effect_data.empty:  # Only plot if we have data for this effect type
+            sns.lineplot(x=x_lab, y='Effect Size', data=effect_data, 
+                        label=effect_type_mapping[effect_type], 
+                        color=palette[i], linewidth=2.5, ax=ax)
+            ax.fill_between(effect_data[x_lab], effect_data['Lower CI'], 
+                          effect_data['Upper CI'],
+                          color=palette[i], alpha=0.2)
 
     # Customize axes labels and title
-    ax.set_xlabel(f'P({spurious_concept}|{target_concept})', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Percent Typos per Review Starting with Vowel', fontsize=14, fontweight='bold')
     ax.set_ylabel('Reward', fontsize=14, fontweight='bold')
-    dataset = effects_template[0]['dataset_name']
-    model_name = effects_template[0]['score']
-    ax.set_title(f"Effect of {target_concept} on {model_name}\n(Data from {dataset})", fontsize=16, fontweight='bold')
-    ax.legend(title='', loc='upper left', fontsize=12, frameon=True)
+    dataset = templates[0]['dataset_name']
+    model_name = templates[0]['score']
+    ax.set_title(f"Effect of {target_concept} on {model_name}\n(Data from {dataset})", 
+                fontsize=16, fontweight='bold')
+    ax.legend(title='', loc='lower left', fontsize=12, frameon=True)
     ax.tick_params(axis='both', which='major', labelsize=12)
     ax.grid(True, linestyle='--', alpha=0.7)
 
-    # Add slope of "ATE" and "ATE Naive" on the right-hand side
-    for i, effect_type in enumerate(['ATE', 'ATE Naive']):
-        if effect_type == 'ATE Naive':
-            name = 'ATE (Single Rewrite)' 
-        elif effect_type == 'ATE':
-            name = r'ATE (Rewrite$^2$)'
+    # Calculate and print slopes
+    for effect_type in ['ATE', 'ATE Naive']:
         effect_data = df[df['Effect Type'] == effect_type]
-        x = effect_data[x_lab]
-        y = effect_data['Effect Size']
-        slope, intercept = np.polyfit(x, y, 1)
-        print(f"Slope of {name}: {slope}")
+        if not effect_data.empty:
+            x = effect_data[x_lab]
+            y = effect_data['Effect Size']
+            slope, intercept = np.polyfit(x, y, 1)
+            print(f"Slope of {effect_type_mapping[effect_type]}: {slope:.4f}")
 
     plt.tight_layout()
     plt.show()

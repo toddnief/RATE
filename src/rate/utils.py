@@ -5,7 +5,7 @@ import json
 import os
 import stat
 
-from constants import GROUP_NAME, SCORED_DIR
+from rate.constants import GROUP_NAME, SCORED_DIR
 
 
 def set_group_and_permissions(save_path, group_name=GROUP_NAME):
