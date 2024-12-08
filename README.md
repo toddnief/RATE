@@ -296,4 +296,4 @@ You will need to create your own ```.jsonl``` config files with your experiment 
 
 ## Synthetic Experiments
 
-TODO
+The synthetic experiments can be found in ```/home/reber/RATE/notebooks/synthetic-results-25K.ipynb``` and ```synthetic-helpsteer.ipynb```.
