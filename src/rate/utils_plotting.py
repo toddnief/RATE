@@ -207,7 +207,7 @@ def naive_vs_RATE(all_data, all_templates, reward_models, normalize=True):
     setup_plots()
     
     n_models = len(reward_models)
-    fig, axes = plt.subplots(1, n_models, figsize=(20, 8), dpi=300, sharey=True)
+    fig, axes = plt.subplots(1, n_models, figsize=(18, 6), dpi=300)
     axes = [axes] if n_models == 1 else axes
     
     for idx, model in enumerate(reward_models):
@@ -285,7 +285,7 @@ def naive_vs_RATE(all_data, all_templates, reward_models, normalize=True):
         ax.tick_params(axis='y', labelleft=True)  # Turn on y-tick labels for all subplots
         
         if idx == 0:
-            legend = ax.legend(title='', loc='upper left', fontsize=18, frameon=True)
+            legend = ax.legend(title='', loc='upper left', fontsize=20, frameon=True)
             legend.get_title().set_fontweight('bold')
         else:
             legend = ax.get_legend()
@@ -362,6 +362,9 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
             
         ax.tick_params(axis='both', which='major', labelsize=12)
         ax.grid(True, linestyle='--', alpha=0.7)
+
+        # x lim should be 0, 1
+        ax.set_xlim(0, 1)
 
         for effect_type in ['ATE_rewritten_rewrite', 'ATE_single_rewrite']:
             effect_data = df[df['Effect Type'] == effect_type]
