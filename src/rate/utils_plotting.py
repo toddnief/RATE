@@ -85,21 +85,29 @@ def setup_plots():
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
     plt.rcParams['text.usetex'] = True
-    plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}\usepackage{times}'
+    # Add bolder text support in LaTeX
+    plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}\usepackage{times}\usepackage{bm}'
 
 def plot_scores(templates_data, SCORED_DIR):
     setup_plots()
     
-    # Create subplots based on number of templates
     n_plots = len(templates_data)
-    fig, axes = plt.subplots(1, n_plots, figsize=(8 * n_plots, 4), dpi=300)
+    fig = plt.figure(figsize=(8 * n_plots, 4), dpi=300)
+    gs = fig.add_gridspec(1, n_plots)
+    axes = [fig.add_subplot(gs[0, i]) for i in range(n_plots)]
+    
     if n_plots == 1:
         axes = [axes]
     
     colors = ["#1f77b4", "#ff7f0e"]
+    legend_lines = [
+        Line2D([0], [0], color=colors[0], linewidth=2, 
+               label=r"$\textbf{Original}$"),
+        Line2D([0], [0], color=colors[1], linewidth=2, 
+               label=r"$\textbf{Rewrite}^2$")
+    ]
     
     for idx, (ax, template) in enumerate(zip(axes, templates_data)):
-        # Load and process data
         dataset_filename = Path(template["dataset_filename"])
         scores = load_dataset_from_json(SCORED_DIR / "complete" / dataset_filename)
         
@@ -107,21 +115,18 @@ def plot_scores(templates_data, SCORED_DIR):
         rewrite_scores = []
         
         for key, data_point in scores.items():
-            original_scores.append(data_point[template["reward_key"]].get("original", 0))
-            rewrite_scores.append(data_point[template["reward_key"]].get("rewritten rewrite", 0))
+            original_scores.append(data_point[template["reward_key"]].get("original", 0) / data_point[template["reward_key"]].get("reward_std", 1))
+            rewrite_scores.append(data_point[template["reward_key"]].get("rewritten rewrite", 0) / data_point[template["reward_key"]].get("reward_std", 1))
+
         
-        # Create KDE plots
-        sns.kdeplot(original_scores, label="Original", color=colors[0], 
-                   fill=True, alpha=0.5, linewidth=2, ax=ax)
-        sns.kdeplot(rewrite_scores, label="Rewrite", color=colors[1], 
-                   fill=True, alpha=0.5, linewidth=2, ax=ax)
+        sns.kdeplot(data=original_scores, color=colors[0], fill=True, alpha=0.5, linewidth=2, ax=ax)
+        sns.kdeplot(data=rewrite_scores, color=colors[1], fill=True, alpha=0.5, linewidth=2, ax=ax)
         
-        # Customize plot
-        ax.set_title(f"{template['dataset_name']} {template['concept']} {template['score']} Rewards", 
-                    fontsize=20, fontweight='bold', pad=20)
-        ax.set_xlabel("Reward", fontsize=12)
+        ax.set_title(r'\textbf{' + f"{template['dataset_name']} {template['concept']} {template['score']} Rewards" + '}', 
+                    fontsize=24, pad=20)
+        ax.set_xlabel(r'\textbf{Reward}', fontsize=18)
         if idx == 0:
-            ax.set_ylabel("Density", fontsize=12)
+            ax.set_ylabel(r'\textbf{Density}', fontsize=18)
         else:
             ax.set_ylabel("")
         
@@ -129,13 +134,19 @@ def plot_scores(templates_data, SCORED_DIR):
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         
-        # Add legend
-        ax.legend(handles=[Line2D([0], [0], color=colors[0], linewidth=2, label="Original"),
-                         Line2D([0], [0], color=colors[1], linewidth=2, label="Rewrite of Rewrite")], 
-                 title="Score Type", title_fontsize='14', fontsize=12, 
-                 frameon=True, fancybox=True, shadow=True)
+        legend = ax.get_legend()
+        if legend is not None:
+            legend.remove()
+        
+        if idx == 0:
+            legend = ax.legend(handles=legend_lines,
+                             fontsize=18,
+                             loc='upper left',
+                             frameon=True, 
+                             fancybox=True,
+                             shadow=True)
     
-    plt.tight_layout()
+    plt.subplots_adjust(wspace=0.3, left=0.1, right=0.9)
     plt.show()
 
 def rewrite_bias(effects_data, titles):
@@ -147,17 +158,22 @@ def rewrite_bias(effects_data, titles):
     for idx, ax in enumerate(axes):
         data = pd.DataFrame({
             'Effect': [
-                r'$\widehat{\mathrm{ATE}}\ (\mathrm{Rewrite}^2)$', 
-                r'$\widehat{\mathrm{ATE}}\ (\mathrm{Rewrite})$',
-                r'$\widehat{\mathrm{ATT}}\ (\mathrm{Rewrite}^2)$', 
-                r'$\widehat{\mathrm{ATT}}\ (\mathrm{Rewrite})$',
-                r'$\widehat{\mathrm{ATU}}\ (\mathrm{Rewrite}^2)$', 
-                r'$\widehat{\mathrm{ATU}}\ (\mathrm{Rewrite})$'
+                r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite}^2)$', 
+                r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite})$',
+                r'$\widehat{\textbf{ATT}}\ (\textbf{Rewrite}^2)$', 
+                r'$\widehat{\textbf{ATT}}\ (\textbf{Rewrite})$',
+                r'$\widehat{\textbf{ATU}}\ (\textbf{Rewrite}^2)$', 
+                r'$\widehat{\textbf{ATU}}\ (\textbf{Rewrite})$'
             ],
             'Value': [effects_data[idx][f'{effect}'] / effects_data[idx]['reward_std'] 
-                     for effect in ['ATE_rewritten_rewrite', 'ATE_single_rewrite', 'ATT_rewritten_rewrite', 'ATT_single_rewrite', 'ATU_rewritten_rewrite', 'ATU_single_rewrite']],
+         for effect in ['ATE_rewritten_rewrite', 'ATE_single_rewrite', 
+                        'ATT_rewritten_rewrite', 'ATT_single_rewrite', 
+                        'ATU_rewritten_rewrite', 'ATU_single_rewrite']],
             'Stderr': [effects_data[idx][f'{effect}_stderr'] / effects_data[idx]['reward_std'] 
-                      for effect in ['ATE_rewritten_rewrite', 'ATE_single_rewrite', 'ATT_rewritten_rewrite', 'ATT_single_rewrite', 'ATU_rewritten_rewrite', 'ATU_single_rewrite']]
+                    for effect in ['ATE_rewritten_rewrite', 'ATE_single_rewrite', 
+                                    'ATT_rewritten_rewrite', 'ATT_single_rewrite', 
+                                    'ATU_rewritten_rewrite', 'ATU_single_rewrite']]
+
         })
 
         data['CI_lower'] = data['Value'] - 1.96 * data['Stderr']
@@ -169,23 +185,29 @@ def rewrite_bias(effects_data, titles):
 
         ax.errorbar(x=data.index, y=data['Value'], yerr=1.96 * data['Stderr'], 
                    fmt='none', color='black', capsize=5, capthick=2, elinewidth=2)
-
-        ax.set_ylabel('Effect Size', fontsize=14)
+        if idx == 0:
+            ax.set_ylabel(r'$\textbf{Effect Size}$', fontsize=18)
+        else:
+            ax.set_ylabel('')
         ax.set_xlabel('')
         ax.axhline(y=0, color='gray', linestyle='--', linewidth=1)
-        ax.set_title(titles[idx], fontsize=14, fontweight='bold')
         ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
-        ax.tick_params(axis='both', which='major', labelsize=12)
+        ax.tick_params(axis='both', which='major', labelsize=18)
+        ax.set_title(r'\textbf{' + titles[idx] + '}', fontsize=24, pad=22)
+        
+        # Remove legend if it's not the first subplot
+        if idx > 0 and ax.get_legend() != None:
+            ax.get_legend().remove()
 
-    plt.suptitle('Correcting for Rewrite Bias', fontsize=22, fontweight='bold')
     plt.tight_layout()
     plt.show()
 
-def naive_vs_RATE(all_data, all_templates, reward_models, normalize=None):
+
+def naive_vs_RATE(all_data, all_templates, reward_models, normalize=True):
     setup_plots()
     
     n_models = len(reward_models)
-    fig, axes = plt.subplots(1, n_models, figsize=(16, 8), dpi=300, sharey=True)
+    fig, axes = plt.subplots(1, n_models, figsize=(20, 8), dpi=300, sharey=True)
     axes = [axes] if n_models == 1 else axes
     
     for idx, model in enumerate(reward_models):
@@ -201,10 +223,10 @@ def naive_vs_RATE(all_data, all_templates, reward_models, normalize=None):
                 error = data[f'{effect_type}_stderr']
                 
                 if normalize:
-                    norm_factor = data['reward_std'] if normalize == "reward_std" else abs(data['naive_effect'])
+                    print(data.get('reward_std'))
+                    norm_factor = data.get('reward_std', 1)  # Default to 1 if `reward_std` missing
                     value /= norm_factor
                     error /= norm_factor
-
                 grouped_data[concept][effect_type].append(value)
                 grouped_data[concept][f'{effect_type}_error'].append(error)
         
@@ -225,9 +247,10 @@ def naive_vs_RATE(all_data, all_templates, reward_models, normalize=None):
         plot_data = []
         for concept in valid_concepts:
             for effect_type in ['naive_effect', 'ATE_rewritten_rewrite']:
+                label = r'$\textbf{Naive}$' if effect_type == 'naive_effect' else r'$\widehat{\textbf{ATE}}_{\textbf{RATE}}$'
                 plot_data.append({
                     'Concept': concept,
-                    'Effect Type': 'Naive' if effect_type == 'naive_effect' else r'$\widehat{\mathrm{ATE}}_\mathrm{RATE}$',
+                    'Effect Type': label,
                     'Effect Size': grouped_data[concept][effect_type],
                     'Error': grouped_data[concept][f'{effect_type}_error']
                 })
@@ -235,10 +258,10 @@ def naive_vs_RATE(all_data, all_templates, reward_models, normalize=None):
         df = pd.DataFrame(plot_data)
         
         sns.barplot(x='Concept', y='Effect Size', hue='Effect Type', data=df, ax=ax,
-                   palette=['#1f77b4', '#ff7f0e'], alpha=0.7, capsize=0.1, errorbar=None)
+                    palette=['#1f77b4', '#ff7f0e'], alpha=0.7, capsize=0.1, errorbar=None)
         
         bar_width = 0.4
-        for i, effect_type in enumerate(['Naive', r'$\widehat{\mathrm{ATE}}_\mathrm{RATE}$']):
+        for i, effect_type in enumerate(df['Effect Type'].unique()):
             effect_data = df[df['Effect Type'] == effect_type].set_index('Concept')
             x = np.arange(len(valid_concepts))
             y = effect_data.loc[valid_concepts, 'Effect Size']
@@ -247,25 +270,33 @@ def naive_vs_RATE(all_data, all_templates, reward_models, normalize=None):
             x_pos = x + (i - 0.5) * bar_width
             ax.errorbar(x_pos, y, yerr=yerr, fmt='none', c='black', capsize=5)
         
-        ax.set_title(f"{model}", fontsize=18, fontweight='bold')
+        ax.set_title(r'\textbf{' + f"{model}" + '}', fontsize=20, pad=20)
         ax.set_xticks(np.arange(len(valid_concepts)))
-        ax.set_xticklabels(valid_concepts, rotation=45, ha='right')
+        ax.set_xticklabels([r'\textbf{' + concept + '}' for concept in valid_concepts], 
+                           rotation=45, ha='right', fontsize=18)
+        
         ax.set_xlabel('')
         if idx == 0:
-            ax.set_ylabel('Model-Specific Effect Size', fontsize=16)
+            ax.set_ylabel(r'\textbf{Effect Size}', fontsize=18)
         else:
-            ax.set_ylabel('')
+            ax.set_ylabel('')  # No y-axis label for other plots
+        
+        # **Explicitly show y-tick values for all plots:**
+        ax.tick_params(axis='y', labelleft=True)  # Turn on y-tick labels for all subplots
+        
+        if idx == 0:
+            legend = ax.legend(title='', loc='upper left', fontsize=18, frameon=True)
+            legend.get_title().set_fontweight('bold')
+        else:
+            legend = ax.get_legend()
+            if legend is not None:
+                legend.remove()
+                
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.tick_params(axis='both', which='major', labelsize=18)
-        if idx == n_models - 1:
-            ax.legend(title='', loc='upper right', bbox_to_anchor=(1.3, 1))
-            ax.legend(fontsize='x-large')
-        else:
-            ax.legend_.remove()
-
-    plt.suptitle('Naive vs RATE Estimates Across Models', fontsize=22, fontweight='bold')
-    plt.tight_layout(rect=[0, 0.05, 1, 0.95])
+    
+    plt.subplots_adjust(left=0.1, right=0.9, bottom=0.15, top=0.9)
     plt.show()
 
 def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious_concept1,
@@ -280,23 +311,27 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
                 plot_data.append({
                     'Correlation': correlation,
                     'Effect Type': effect_type,
-                    'Effect Size': data[effect_type],
-                    'Lower CI': data[effect_type] - data.get(f'{effect_type}_stderr', 0) * 1.96,
-                    'Upper CI': data[effect_type] + data.get(f'{effect_type}_stderr', 0) * 1.96
+                    'Effect Size': data[effect_type] / data.get('reward_std', 1),
+                    'Lower CI': (data[effect_type] - data.get(f'{effect_type}_stderr', 0) * 1.96) / data.get('reward_std', 1),
+                    'Upper CI': (data[effect_type] + data.get(f'{effect_type}_stderr', 0) * 1.96) / data.get('reward_std', 1)
                 })
         return pd.DataFrame(plot_data)
 
     df1 = prepare_plot_data(data_list1, effects_templates1)
     df2 = prepare_plot_data(data_list2, effects_templates2)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5), dpi=300)
+    # Create figure with more space for labels
+    fig = plt.figure(figsize=(14, 5), dpi=300)
+    gs = fig.add_gridspec(1, 2, wspace=0.3)
+    ax1 = fig.add_subplot(gs[0])
+    ax2 = fig.add_subplot(gs[1])
 
     def plot_subplot(ax, df, target_concept, spurious_concept, effects_templates):
         palette = sns.color_palette("deep", 3)
         effect_labels = {
-            'naive_effect': 'Naive Estimate',
-            'ATE_rewritten_rewrite': r'$\widehat{\mathrm{ATE}}\ (\mathrm{Rewrite}^2)$',
-            'ATE_single_rewrite': r'$\widehat{\mathrm{ATE}}\ (\mathrm{Single\ Rewrite})$'
+            'naive_effect': r'$\textbf{Naive}$',
+            'ATE_rewritten_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite}^2)$',
+            'ATE_single_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite})$'
         }
         
         for i, (effect_type, label) in enumerate(effect_labels.items()):
@@ -306,13 +341,25 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
             ax.fill_between(effect_data['Correlation'], effect_data['Lower CI'], 
                           effect_data['Upper CI'], color=palette[i], alpha=0.2)
 
-        ax.set_xlabel(fr'$P({spurious_concept}|{target_concept})$', fontsize=14, fontweight='bold')
-        ax.set_ylabel('Reward', fontsize=14, fontweight='bold')
+        # Format conditional probability with bold text
+        ax.set_xlabel(fr'$\textbf{{P}}(\textbf{{{spurious_concept}}}|\textbf{{{target_concept}}})$', fontsize=18)
+        ax.set_ylabel(r'$\textbf{Reward}$', fontsize=18)
+        
         dataset = effects_templates[0]['dataset_name']
         model_name = effects_templates[0]['score']
-        ax.set_title(f"Effect of {target_concept} on {model_name}\n(Data from {dataset})", 
-                    fontsize=16, fontweight='bold')
-        ax.legend(title='', loc='upper left', fontsize=12, frameon=True)
+        ax.set_title(r'\textbf{' + f"Effect of {target_concept} on {model_name}" + '}', 
+                    fontsize=24, pad=20)
+        
+        if ax == ax1:
+            ax.legend(loc='upper left', fontsize=16, frameon=True)
+        else:
+            ax.get_legend().remove()
+
+        if ax == ax1:
+            ax.set_ylabel(r'$\textbf{Effect Size}$', fontsize=18)
+        else:
+            ax.set_ylabel('')
+            
         ax.tick_params(axis='both', which='major', labelsize=12)
         ax.grid(True, linestyle='--', alpha=0.7)
 
@@ -326,7 +373,8 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
     plot_subplot(ax1, df1, target_concept1, spurious_concept1, effects_templates1)
     plot_subplot(ax2, df2, target_concept2, spurious_concept2, effects_templates2)
 
-    plt.tight_layout()
+    # Adjust layout manually instead of using tight_layout
+    plt.subplots_adjust(left=0.1, right=0.95, bottom=0.15, top=0.9, wspace=0.25)
     plt.show()
 
 def synthetic_plot(data_list, templates, target_concept, spurious_concept, x_lab: str):
@@ -348,9 +396,9 @@ def synthetic_plot(data_list, templates, target_concept, spurious_concept, x_lab
                     plot_data.append({
                         x_lab: x_val,
                         'Effect Type': display_name,
-                        'Effect Size': float(data[effect_type]),
-                        'Lower CI': float(data[effect_type]) - float(data.get(f'{effect_type}_stderr', 0)) * 1.96,
-                        'Upper CI': float(data[effect_type]) + float(data.get(f'{effect_type}_stderr', 0)) * 1.96
+                        'Effect Size': float(data[effect_type]) / data.get('reward_std', 1),
+                        'Lower CI': (float(data[effect_type]) - float(data.get(f'{effect_type}_stderr', 0)) * 1.96) / data.get('reward_std', 1),
+                        'Upper CI': (float(data[effect_type]) + float(data.get(f'{effect_type}_stderr', 0)) * 1.96) / data.get('reward_std', 1)
                     })
         return pd.DataFrame(plot_data)
 
@@ -361,8 +409,8 @@ def synthetic_plot(data_list, templates, target_concept, spurious_concept, x_lab
     palette = sns.color_palette("deep", 3)
     effect_type_mapping = {
         'Naive Effect': 'Naive Estimate',
-        'ATE_rewritten_rewrite': r'$\widehat{\mathrm{ATE}}\ (\mathrm{Rewrite}^2)$',
-        'ATE_single_rewrite': r'$\widehat{\mathrm{ATE}}\ (\mathrm{Single\ Rewrite})$'
+        'ATE_rewritten_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite}^2)$',
+        'ATE_single_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Single\ Rewrite})$'
     }
 
     for i, effect_type in enumerate(effect_type_mapping.keys()):
@@ -375,12 +423,12 @@ def synthetic_plot(data_list, templates, target_concept, spurious_concept, x_lab
                           effect_data['Upper CI'],
                           color=palette[i], alpha=0.2)
 
-    ax.set_xlabel('Percent Typos per Review Starting with Vowel', fontsize=14, fontweight='bold')
-    ax.set_ylabel('Reward', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Percent Typos per Review Starting with Vowel', fontsize=18, fontweight='bold')
+    ax.set_ylabel('Reward', fontsize=18, fontweight='bold')
     dataset = templates[0]['dataset_name']
     model_name = templates[0]['score']
-    ax.set_title(f"Effect of {target_concept} on {model_name}\n(Data from {dataset})", 
-                fontsize=16, fontweight='bold')
+    ax.set_title(f"Effect of {target_concept} on {model_name}", 
+                fontsize=24, fontweight='bold')
     ax.legend(title='', loc='lower left', fontsize=12, frameon=True)
     ax.tick_params(axis='both', which='major', labelsize=12)
     ax.grid(True, linestyle='--', alpha=0.7)
@@ -428,14 +476,13 @@ def att_atu(effects_data, reward_std, model_name):
 
     legend_elements = [
         plt.Rectangle((0,0), 1, 1, facecolor='blue', edgecolor='black', alpha=0.8, 
-                     label=r'$\widehat{\mathrm{ATT}}_{\mathrm{RATE}}$'),
+                     label=r'$\widehat{\textbf{ATT}}_{\textbf{RATE}}$'),
         plt.Rectangle((0,0), 1, 1, facecolor='red', edgecolor='black', alpha=0.8, 
-                     label=r'$\widehat{\mathrm{ATU}}_{\mathrm{RATE}}$')
+                     label=r'$\widehat{\textbf{ATU}}_{\textbf{RATE}}$')
     ]
     
     # Keep original title font size and style
-    ax.legend(handles=legend_elements, title='95% Confidence Intervals', 
-             title_fontsize=14, fontsize=12, loc='upper right', 
+    ax.legend(handles=legend_elements, fontsize=12, loc='upper right', 
              frameon=True, edgecolor='black')
 
     plt.tight_layout()
