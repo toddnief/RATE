@@ -5,6 +5,7 @@ import re
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.lines import Line2D
+import matplotlib as mpl
 import numpy as np
 import seaborn as sns
 from collections import defaultdict
@@ -101,10 +102,8 @@ def plot_scores(templates_data, SCORED_DIR):
     
     colors = ["#1f77b4", "#ff7f0e"]
     legend_lines = [
-        Line2D([0], [0], color=colors[0], linewidth=2, 
-               label=r"$\textbf{Original}$"),
-        Line2D([0], [0], color=colors[1], linewidth=2, 
-               label=r"$\textbf{Rewrite}^2$")
+        Line2D([0], [0], color=colors[0], linewidth=2, label=r"$\textbf{Original}$"),
+        Line2D([0], [0], color=colors[1], linewidth=2, label=r"$\textbf{Rewrite}^2$")
     ]
     
     for idx, (ax, template) in enumerate(zip(axes, templates_data)):
@@ -118,12 +117,20 @@ def plot_scores(templates_data, SCORED_DIR):
             original_scores.append(data_point[template["reward_key"]].get("original", 0) / data_point[template["reward_key"]].get("reward_std", 1))
             rewrite_scores.append(data_point[template["reward_key"]].get("rewritten rewrite", 0) / data_point[template["reward_key"]].get("reward_std", 1))
 
-        
+        # KDE plot
         sns.kdeplot(data=original_scores, color=colors[0], fill=True, alpha=0.5, linewidth=2, ax=ax)
         sns.kdeplot(data=rewrite_scores, color=colors[1], fill=True, alpha=0.5, linewidth=2, ax=ax)
+
+        # Add dashed lines for the mean scores
+        original_mean = sum(original_scores) / len(original_scores) if original_scores else 0
+        rewrite_mean = sum(rewrite_scores) / len(rewrite_scores) if rewrite_scores else 0
         
+        ax.axvline(original_mean, color=colors[0], linestyle='--', linewidth=2, label='Original Mean')
+        ax.axvline(rewrite_mean, color=colors[1], linestyle='--', linewidth=2, label='Rewrite Mean')
+        
+        # Plot titles and labels
         ax.set_title(r'\textbf{' + f"{template['dataset_name']} {template['concept']} {template['score']} Rewards" + '}', 
-                    fontsize=24, pad=20)
+                     fontsize=24, pad=20)
         ax.set_xlabel(r'\textbf{Reward}', fontsize=18)
         if idx == 0:
             ax.set_ylabel(r'\textbf{Density}', fontsize=18)
@@ -134,17 +141,17 @@ def plot_scores(templates_data, SCORED_DIR):
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         
+        # Remove and re-add legend with dashed lines included
         legend = ax.get_legend()
         if legend is not None:
             legend.remove()
         
         if idx == 0:
-            legend = ax.legend(handles=legend_lines,
-                             fontsize=18,
-                             loc='upper left',
-                             frameon=True, 
-                             fancybox=True,
-                             shadow=True)
+            legend_lines_with_mean = [
+                Line2D([0], [0], color=colors[0], linewidth=2, label=r"$\textbf{Original}$"),
+                Line2D([0], [0], color=colors[1], linewidth=2, label=r"$\textbf{Rewrite}^2$"),
+            ]
+            legend = ax.legend(handles=legend_lines_with_mean, fontsize=14, loc='upper left', frameon=True)
     
     plt.subplots_adjust(wspace=0.3, left=0.1, right=0.9)
     plt.show()
@@ -204,99 +211,157 @@ def rewrite_bias(effects_data, titles):
 
 
 def naive_vs_RATE(all_data, all_templates, reward_models, normalize=True):
-    setup_plots()
-    
-    n_models = len(reward_models)
-    fig, axes = plt.subplots(1, n_models, figsize=(18, 6), dpi=300)
-    axes = [axes] if n_models == 1 else axes
-    
+    """
+    Plot naive effect vs. RATE using mathtext for bold text (no external LaTeX).
+    Shows y-axis grid lines, uses tight_layout, and only has y-tick labels on the leftmost subplot.
+    """
+
+    fig, axes = plt.subplots(
+        1, len(reward_models),
+        figsize=(18, 6),
+        dpi=300,
+        sharey=True  # <-- same y-axis scale
+    )
+
+    # If there's only one model, make axes a list for consistency
+    if len(reward_models) == 1:
+        axes = [axes]
+
     for idx, model in enumerate(reward_models):
         ax = axes[idx]
-        model_data = [data for data, template in zip(all_data, all_templates) if template['score'] == model]
-        model_templates = [template for template in all_templates if template['score'] == model]
+
+        # Filter data for this model
+        model_data = [
+            d for d, t in zip(all_data, all_templates)
+            if t['score'] == model
+        ]
+        model_templates = [
+            t for t in all_templates
+            if t['score'] == model
+        ]
         
         grouped_data = defaultdict(lambda: defaultdict(list))
         for data, template in zip(model_data, model_templates):
             concept = template['concept']
             for effect_type in ['naive_effect', 'ATE_rewritten_rewrite']:
                 value = data[effect_type]
-                error = data[f'{effect_type}_stderr']
+                error = data.get(f'{effect_type}_stderr', 0.0)
                 
                 if normalize:
-                    print(data.get('reward_std'))
-                    norm_factor = data.get('reward_std', 1)  # Default to 1 if `reward_std` missing
+                    norm_factor = data.get('reward_std', 1)
                     value /= norm_factor
                     error /= norm_factor
+                
                 grouped_data[concept][effect_type].append(value)
                 grouped_data[concept][f'{effect_type}_error'].append(error)
-        
+
         valid_concepts = []
+        # Compute mean and mean-squared errors
         for concept in grouped_data:
-            if all(len(grouped_data[concept][key]) > 0 for key in grouped_data[concept]):
+            if all(len(grouped_data[concept][k]) > 0 for k in grouped_data[concept]):
                 valid_concepts.append(concept)
                 for key in grouped_data[concept]:
                     if key.endswith('_error'):
-                        grouped_data[concept][key] = np.sqrt(np.mean(np.array(grouped_data[concept][key])**2))
+                        grouped_data[concept][key] = np.sqrt(
+                            np.mean(np.array(grouped_data[concept][key])**2)
+                        )
                     else:
                         grouped_data[concept][key] = np.mean(grouped_data[concept][key])
-        
+
         if not valid_concepts:
-            print(f"Error: No valid concepts found for model '{model}'. Skipping this plot.")
+            print(f"Error: No valid concepts found for model '{model}'. Skipping.")
             continue
-        
+
+        # Print out each quantity
+        # Sort valid concepts alphabetically
+        valid_concepts = sorted(valid_concepts)
+        print(f"\n=== Model: {model} ===")
+        for concept in valid_concepts:
+            naive_val = grouped_data[concept]['naive_effect']
+            naive_err = grouped_data[concept]['naive_effect_error']
+            rate_val = grouped_data[concept]['ATE_rewritten_rewrite']
+            rate_err = grouped_data[concept]['ATE_rewritten_rewrite_error']
+            print(
+                f"Concept: {concept:20} | "
+                f"Naive: {naive_val:.3f} ± {naive_err:.3f} | "
+                f"RATE: {rate_val:.3f} ± {rate_err:.3f}"
+            )
+
+        # Prepare data for plotting
         plot_data = []
         for concept in valid_concepts:
             for effect_type in ['naive_effect', 'ATE_rewritten_rewrite']:
-                label = r'$\textbf{Naive}$' if effect_type == 'naive_effect' else r'$\widehat{\textbf{ATE}}_{\textbf{RATE}}$'
+                if effect_type == 'naive_effect':
+                    label = r'$\mathbf{Naive}$'
+                else:
+                    label = r'$\widehat{\mathbf{ATE}}_{\mathbf{RATE}}$'
                 plot_data.append({
                     'Concept': concept,
                     'Effect Type': label,
                     'Effect Size': grouped_data[concept][effect_type],
                     'Error': grouped_data[concept][f'{effect_type}_error']
                 })
-        
+
         df = pd.DataFrame(plot_data)
-        
-        sns.barplot(x='Concept', y='Effect Size', hue='Effect Type', data=df, ax=ax,
-                    palette=['#1f77b4', '#ff7f0e'], alpha=0.7, capsize=0.1, errorbar=None)
-        
+
+        # Bar plot (custom error bars)
+        sns.barplot(
+            x='Concept', y='Effect Size', hue='Effect Type',
+            data=df, ax=ax,
+            palette=['#1f77b4', '#ff7f0e'],
+            alpha=0.7, capsize=0.1, errorbar=None
+        )
+
+        # Add manual error bars
         bar_width = 0.4
-        for i, effect_type in enumerate(df['Effect Type'].unique()):
-            effect_data = df[df['Effect Type'] == effect_type].set_index('Concept')
-            x = np.arange(len(valid_concepts))
-            y = effect_data.loc[valid_concepts, 'Effect Size']
-            yerr = effect_data.loc[valid_concepts, 'Error'] * 1.96
-            
-            x_pos = x + (i - 0.5) * bar_width
-            ax.errorbar(x_pos, y, yerr=yerr, fmt='none', c='black', capsize=5)
+        unique_labels = df['Effect Type'].unique()
+        for i, effect_label in enumerate(unique_labels):
+            effect_data = df[df['Effect Type'] == effect_label].set_index('Concept')
+            x_vals = np.arange(len(valid_concepts))
+            y_vals = effect_data.loc[valid_concepts, 'Effect Size']
+            y_errs = effect_data.loc[valid_concepts, 'Error'] * 1.96  # ~95% CI
+
+            # Shift x positions so error bars line up with the bars
+            x_positions = x_vals + (i - 0.5) * bar_width
+            ax.errorbar(x_positions, y_vals, yerr=y_errs, fmt='none', c='black', capsize=5)
+
+        # Add a light y-axis grid
+        ax.grid(axis='y', alpha=0.3)
         
-        ax.set_title(r'\textbf{' + f"{model}" + '}', fontsize=20, pad=20)
+        # Set title as model name, bold
+        ax.set_title(f"{model}", fontsize=20, pad=20, fontweight='bold')
+
+        # Bold x tick labels (mathtext)
         ax.set_xticks(np.arange(len(valid_concepts)))
-        ax.set_xticklabels([r'\textbf{' + concept + '}' for concept in valid_concepts], 
-                           rotation=45, ha='right', fontsize=18)
-        
-        ax.set_xlabel('')
+        ax.set_xticklabels(
+            [rf'$\mathbf{{{concept}}}$' for concept in valid_concepts],
+            rotation=45, ha='right', fontsize=14
+        )
+
+        # If this is the leftmost subplot, show y-label and ticks
         if idx == 0:
-            ax.set_ylabel(r'\textbf{Effect Size}', fontsize=18)
+            ax.set_ylabel(r'$\mathbf{Effect\ Size}$', fontsize=16)
+            ax.tick_params(axis='y', labelleft=True)  # show y tick labels
         else:
-            ax.set_ylabel('')  # No y-axis label for other plots
-        
-        # **Explicitly show y-tick values for all plots:**
-        ax.tick_params(axis='y', labelleft=True)  # Turn on y-tick labels for all subplots
-        
+            # Remove y-label and y tick labels for other subplots
+            ax.set_ylabel('')
+            ax.tick_params(axis='y', labelleft=False)
+
+        ax.set_xlabel('')
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.tick_params(axis='both', which='major', labelsize=14)
+
+        # Legend
         if idx == 0:
-            legend = ax.legend(title='', loc='upper left', fontsize=20, frameon=True)
-            legend.get_title().set_fontweight('bold')
+            ax.legend(title='', loc='upper left', fontsize=12, frameon=True)
         else:
             legend = ax.get_legend()
             if legend is not None:
                 legend.remove()
-                
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.tick_params(axis='both', which='major', labelsize=18)
-    
-    plt.subplots_adjust(left=0.1, right=0.9, bottom=0.15, top=0.9)
+
+    # Use tight_layout to prevent label/title overlap
+    plt.tight_layout()
     plt.show()
 
 def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious_concept1,
