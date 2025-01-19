@@ -156,7 +156,7 @@ def plot_scores(templates_data, SCORED_DIR):
     plt.subplots_adjust(wspace=0.3, left=0.1, right=0.9)
     plt.show()
 
-def rewrite_bias(effects_data, titles):
+def rewrite_bias(effects_data):
     setup_plots()
     
     fig, axes = plt.subplots(1, 3, figsize=(18, 6), dpi=300)
@@ -200,7 +200,7 @@ def rewrite_bias(effects_data, titles):
         ax.axhline(y=0, color='gray', linestyle='--', linewidth=1)
         ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
         ax.tick_params(axis='both', which='major', labelsize=18)
-        ax.set_title(r'\textbf{' + titles[idx] + '}', fontsize=24, pad=22)
+        ax.set_title(r'\textbf{' + effects_data[idx]['score'] + '}', fontsize=24, pad=22)
         
         # Remove legend if it's not the first subplot
         if idx > 0 and ax.get_legend() != None:
