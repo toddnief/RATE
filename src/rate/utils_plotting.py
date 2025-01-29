@@ -156,70 +156,50 @@ def setup_plots():
     # Add bolder text support in LaTeX
     plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}\usepackage{times}\usepackage{bm}'
 
-def plot_scores(templates_data, SCORED_DIR):
+def plot_scores(template_data, SCORED_DIR):
     setup_plots()
-    n_plots = len(templates_data)
-    fig = plt.figure(figsize=(8 * n_plots, 4), dpi=300)
-    gs = fig.add_gridspec(1, n_plots)
-    axes = [fig.add_subplot(gs[0, i]) for i in range(n_plots)]
-    
-    if n_plots == 1:
-        axes = [axes]
+    fig = plt.figure(figsize=(8, 4), dpi=300)
+    ax = fig.add_subplot(1, 1, 1)
     
     colors = ['#1f77b4', '#ff7f0e']  # Blue, Orange
+    
+    dataset_filename = Path(template_data["dataset_filename"])
+    scores = load_dataset_from_json(SCORED_DIR / "complete" / dataset_filename)
+    
+    original_scores = []
+    rewrite_scores = []
+    
+    for key, data_point in scores.items():
+        original_scores.append(data_point[template_data["reward_key"]].get("original", 0) / 
+                              data_point[template_data["reward_key"]].get("reward_std", 1))
+        rewrite_scores.append(data_point[template_data["reward_key"]].get("rewritten rewrite", 0) / 
+                             data_point[template_data["reward_key"]].get("reward_std", 1))
+
+    # KDE plot
+    sns.kdeplot(data=original_scores, color=colors[0], fill=True, alpha=0.5, linewidth=2, ax=ax)
+    sns.kdeplot(data=rewrite_scores, color=colors[1], fill=True, alpha=0.5, linewidth=2, ax=ax)
+
+    # Add dashed lines for means
+    original_mean = np.mean(original_scores) if original_scores else 0
+    rewrite_mean = np.mean(rewrite_scores) if rewrite_scores else 0
+    ax.axvline(original_mean, color=colors[0], linestyle='--', linewidth=2)
+    ax.axvline(rewrite_mean, color=colors[1], linestyle='--', linewidth=2)
+
+    # Labels and formatting
+    ax.set_xlabel(r'\textbf{Reward}', fontsize=18)
+    ax.set_ylabel(r'\textbf{Density}', fontsize=18)
+    ax.tick_params(axis='both', which='major', labelsize=10)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    # Custom legend
     legend_lines = [
         Line2D([0], [0], color=colors[0], linewidth=2, label=r"$\textbf{Original}$"),
-        Line2D([0], [0], color=colors[1], linewidth=2, label=r"$\textbf{Rewrite}^2$")
+        Line2D([0], [0], color=colors[1], linewidth=2, label=r"$\textbf{Rewrite}^2$"),
     ]
-    
-    for idx, (ax, template) in enumerate(zip(axes, templates_data)):
-        dataset_filename = Path(template["dataset_filename"])
-        scores = load_dataset_from_json(SCORED_DIR / "complete" / dataset_filename)
-        
-        original_scores = []
-        rewrite_scores = []
-        
-        for key, data_point in scores.items():
-            original_scores.append(data_point[template["reward_key"]].get("original", 0) / data_point[template["reward_key"]].get("reward_std", 1))
-            rewrite_scores.append(data_point[template["reward_key"]].get("rewritten rewrite", 0) / data_point[template["reward_key"]].get("reward_std", 1))
+    ax.legend(handles=legend_lines, fontsize=14, loc='upper left', frameon=True)
 
-        # KDE plot
-        sns.kdeplot(data=original_scores, color=colors[0], fill=True, alpha=0.5, linewidth=2, ax=ax)
-        sns.kdeplot(data=rewrite_scores, color=colors[1], fill=True, alpha=0.5, linewidth=2, ax=ax)
-
-        # Add dashed lines for the mean scores
-        original_mean = sum(original_scores) / len(original_scores) if original_scores else 0
-        rewrite_mean = sum(rewrite_scores) / len(rewrite_scores) if rewrite_scores else 0
-        
-        ax.axvline(original_mean, color=colors[0], linestyle='--', linewidth=2, label='Original Mean')
-        ax.axvline(rewrite_mean, color=colors[1], linestyle='--', linewidth=2, label='Rewrite Mean')
-        
-        # Plot titles and labels
-        # ax.set_title(r'\textbf{' + f"{template['dataset_name']} {template['concept']} {template['score']} Rewards" + '}', 
-        #              fontsize=24, pad=20)
-        ax.set_xlabel(r'\textbf{Reward}', fontsize=18)
-        if idx == 0:
-            ax.set_ylabel(r'\textbf{Density}', fontsize=18)
-        else:
-            ax.set_ylabel("")
-        
-        ax.tick_params(axis='both', which='major', labelsize=10)
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        
-        # Remove and re-add legend with dashed lines included
-        legend = ax.get_legend()
-        if legend is not None:
-            legend.remove()
-        
-        if idx == 0:
-            legend_lines_with_mean = [
-                Line2D([0], [0], color=colors[0], linewidth=2, label=r"$\textbf{Original}$"),
-                Line2D([0], [0], color=colors[1], linewidth=2, label=r"$\textbf{Rewrite}^2$"),
-            ]
-            legend = ax.legend(handles=legend_lines_with_mean, fontsize=14, loc='upper left', frameon=True)
-    
-    plt.subplots_adjust(wspace=0.3, left=0.1, right=0.9)
+    plt.tight_layout()
     plt.show()
 
 def rewrite_bias(effects_data):
@@ -450,13 +430,12 @@ def naive_vs_RATE(all_data, all_templates, reward_models, normalize=True):
     plt.tight_layout()
     plt.show()
 
-def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious_concept1,
-                      data_list2, effects_templates2, target_concept2, spurious_concept2):
+def synthetic_plot(data_list, effects_templates, target_concept, spurious_concept, xlab: str):
     setup_plots()
     colors = sns.color_palette("deep", 3)
-    alphas = [0.3, 0.9, 0.7]  # Naive, RATE (Rewrite^2), Single Rewrite
-    hatches = ['///', '', 'xx']  # Hatching
-    
+    alphas = [0.3, 0.9, 0.7]
+    hatches = ['///', '', 'xx']
+
     def prepare_plot_data(data_list, effects_templates):
         plot_data = []
         for data, template in zip(data_list, effects_templates):
@@ -471,151 +450,46 @@ def synthetic_subplots(data_list1, effects_templates1, target_concept1, spurious
                 })
         return pd.DataFrame(plot_data)
 
-    df1 = prepare_plot_data(data_list1, effects_templates1)
-    df2 = prepare_plot_data(data_list2, effects_templates2)
+    df = prepare_plot_data(data_list, effects_templates)
+    
+    # Create single plot figure
+    fig = plt.figure(figsize=(7, 5), dpi=300)
+    ax = fig.add_subplot(1, 1, 1)
 
-    # Create figure with more space for labels
-    fig = plt.figure(figsize=(14, 5), dpi=300)
-    gs = fig.add_gridspec(1, 2, wspace=0.3)
-    ax1 = fig.add_subplot(gs[0])
-    ax2 = fig.add_subplot(gs[1])
-
-    def plot_subplot(ax, df, target_concept, spurious_concept, effects_templates):
-        effect_labels = {
-            'naive_effect': r'$\textbf{Naive}$',
-            'ATE_rewritten_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite}^2)$',
-            'ATE_single_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite})$'
-        }
+    effect_labels = {
+        'naive_effect': r'$\textbf{Naive}$',
+        'ATE_rewritten_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite}^2)$',
+        'ATE_single_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite})$'
+    }
+    
+    for i, (effect_type, label) in enumerate(effect_labels.items()):
+        effect_data = df[df['Effect Type'] == effect_type]
+        ax.plot(effect_data['Correlation'], effect_data['Effect Size'],
+                label=label, color=colors[i], linewidth=2.5, alpha=alphas[i])
         
-        for i, (effect_type, label) in enumerate(effect_labels.items()):
-            effect_data = df[df['Effect Type'] == effect_type]
-            # Main line
-            line = ax.plot(effect_data['Correlation'], effect_data['Effect Size'],
-                        label=label, color=colors[i], linewidth=2.5,
-                        alpha=alphas[i])
-            
-            # Fill between with hatching for Naive
-            ax.fill_between(effect_data['Correlation'], 
+        ax.fill_between(effect_data['Correlation'], 
                         effect_data['Lower CI'],
                         effect_data['Upper CI'], 
                         color=colors[i],
                         alpha=0.2,
                         hatch=hatches[i])
 
-        # Format conditional probability with bold text
-        ax.set_xlabel(fr'$\textbf{{P}}(\textbf{{{spurious_concept}}}|\textbf{{{target_concept}}})$', fontsize=18)
-        ax.set_ylabel(r'$\textbf{Reward}$', fontsize=18)
-        
-        dataset = effects_templates[0]['dataset_name']
-        model_name = effects_templates[0]['score']
-        # ax.set_title(r'\textbf{' + f"Effect of {target_concept} on {model_name}" + '}', 
-        #             fontsize=24, pad=20)
-        
-        if ax == ax1:
-            ax.legend(loc='upper left', fontsize=16, frameon=True)
-        else:
-            legend = ax.get_legend()
-            if legend is not None:
-                legend.remove()
-
-        if ax == ax1:
-            ax.set_ylabel(r'$\textbf{Effect Size}$', fontsize=18)
-        else:
-            ax.set_ylabel('')
-            
-        ax.tick_params(axis='both', which='major', labelsize=12)
-        ax.grid(True, linestyle='--', alpha=0.7)
-
-        # x lim should be 0, 1
-        ax.set_xlim(0, 1)
-
-        for effect_type in ['ATE_rewritten_rewrite', 'ATE_single_rewrite']:
-            effect_data = df[df['Effect Type'] == effect_type]
-            x = effect_data['Correlation']
-            y = effect_data['Effect Size']
-            slope, intercept = np.polyfit(x, y, 1)
-            print(f"Slope of {effect_labels[effect_type]}: {slope}")
-
-    plot_subplot(ax1, df1, target_concept1, spurious_concept1, effects_templates1)
-    plot_subplot(ax2, df2, target_concept2, spurious_concept2, effects_templates2)
-
-    # Adjust layout manually instead of using tight_layout
-    plt.subplots_adjust(left=0.1, right=0.95, bottom=0.15, top=0.9, wspace=0.25)
-    plt.show()
-
-def synthetic_plot(data_list, templates, target_concept, spurious_concept, x_lab: str):
-    setup_plots()
-    colors = sns.color_palette("deep", 3)
-    alphas = [0.3, 0.9, 0.7]  # Naive, RATE (Rewrite^2), Single Rewrite
-    hatches = ['///', '', 'xx']  # Hatching only for Naive
-
-    def prepare_plot_data(data_list, templates):
-        plot_data = []
-        for data, template in zip(data_list, templates):
-            x_val = int(template['dataset_filename'].split('_typos_')[1].split('.')[0])
-            
-            effect_mapping = {
-                'naive_effect': 'Naive Effect',
-                'ATE_rewritten_rewrite': 'ATE_rewritten_rewrite',
-                'ATE_single_rewrite': 'ATE_single_rewrite'
-            }
-            
-            for effect_type, display_name in effect_mapping.items():
-                if effect_type in data:
-                    plot_data.append({
-                        x_lab: x_val,
-                        'Effect Type': display_name,
-                        'Effect Size': float(data[effect_type]) / data.get('reward_std', 1),
-                        'Lower CI': (float(data[effect_type]) - float(data.get(f'{effect_type}_stderr', 0)) * 1.96) / data.get('reward_std', 1),
-                        'Upper CI': (float(data[effect_type]) + float(data.get(f'{effect_type}_stderr', 0)) * 1.96) / data.get('reward_std', 1)
-                    })
-        return pd.DataFrame(plot_data)
-
-    df = prepare_plot_data(data_list, templates)
-    plt.figure(figsize=(8, 6), dpi=300)
-    ax = plt.gca()
-
-    palette = sns.color_palette("deep", 3)
-    effect_type_mapping = {
-        'Naive Effect': 'Naive Estimate',
-        'ATE_rewritten_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Rewrite}^2)$',
-        'ATE_single_rewrite': r'$\widehat{\textbf{ATE}}\ (\textbf{Single\ Rewrite})$'
-    }
-
-    for i, effect_type in enumerate(effect_type_mapping.keys()):
-        effect_data = df[df['Effect Type'] == effect_type]
-        if not effect_data.empty:
-            # Main line
-            line = ax.plot(effect_data[x_lab], effect_data['Effect Size'],
-                        label=effect_type_mapping[effect_type],
-                        color=colors[i], linewidth=2.5,
-                        alpha=alphas[i])
-            
-            # Fill between with hatching for Naive
-            ax.fill_between(effect_data[x_lab],
-                        effect_data['Lower CI'],
-                        effect_data['Upper CI'],
-                        color=colors[i],
-                        alpha=0.2,
-                        hatch=hatches[i])
-
-    ax.set_xlabel('Percent Typos per Review Starting with Vowel', fontsize=18, fontweight='bold')
-    ax.set_ylabel('Reward', fontsize=18, fontweight='bold')
-    dataset = templates[0]['dataset_name']
-    model_name = templates[0]['score']
-    # ax.set_title(f"Effect of {target_concept} on {model_name}", 
-    #             fontsize=24, fontweight='bold')
-    ax.legend(title='', loc='lower left', fontsize=12, frameon=True)
-    ax.tick_params(axis='both', which='major', labelsize=12)
+    # Labels and formatting
+    ax.set_xlabel(xlab, fontsize=16)
+    ax.set_ylabel(r'$\textbf{Effect Size}$', fontsize=16)
+    ax.legend(loc='upper left', fontsize=12, frameon=True)
+    ax.tick_params(axis='both', which='major', labelsize=10)
     ax.grid(True, linestyle='--', alpha=0.7)
+    ax.set_xlim(0, 1)
 
+    # Slope calculations
     for effect_type in ['ATE_rewritten_rewrite', 'ATE_single_rewrite']:
         effect_data = df[df['Effect Type'] == effect_type]
-        if not effect_data.empty:
-            x = effect_data[x_lab]
-            y = effect_data['Effect Size']
-            slope, intercept = np.polyfit(x, y, 1)
-            print(f"Slope of {effect_type_mapping.get(effect_type, effect_type)}: {slope:.4f}")
+        x = effect_data['Correlation']
+        y = effect_data['Effect Size']
+        if len(x) > 1:  # Ensure we have enough points for linear regression
+            slope = np.polyfit(x, y, 1)[0]
+            print(f"Slope of {effect_labels[effect_type]}: {slope:.4f}")
 
     plt.tight_layout()
     plt.show()
